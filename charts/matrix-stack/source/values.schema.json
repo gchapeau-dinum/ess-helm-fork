@@ -101,6 +101,9 @@
     "ingress": {
       "$ref": "file://common/ingress_global.json"
     },
+    "routes": {
+      "$ref": "file://common/routes_global.json"
+    },
     "storage": {
       "$ref": "file://common/storage_global.json"
     },
@@ -155,6 +158,32 @@
             }
           }
         ]
+      }
+    },
+    "gateway": {
+      "type": "object",
+      "properties": {
+        "create": {
+          "type": "boolean"
+        },
+        "className": {
+          "type": "string"
+        },
+        "annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "tlsEnabled": {
+          "type": "boolean"
+        },
+        "tlsSecret": {
+          "type": "string"
+        },
+        "disableHTTPRedirect": {
+          "type": "boolean"
+        }
       }
     },
     "deploymentMarkers": {
