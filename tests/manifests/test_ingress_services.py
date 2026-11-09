@@ -210,3 +210,69 @@ async def test_ingress_services_local_service_properties(values, make_templates)
                 assert "clusterIP" not in found_service["spec"], (
                     f"{template_id(template)} has a clusterIP defined for a non-ClusterIP service"
                 )
+
+
+@pytest.mark.parametrize("values_file", values_files_to_test)
+@pytest.mark.asyncio_cooperative
+async def test_component_service_overrides_ingress_service(values, make_templates):
+    values.setdefault("ingress", {}).setdefault("service", {})["type"] = "ClusterIP"
+    values.setdefault("ingress", {}).setdefault("service", {})["internalTrafficPolicy"] = "Cluster"
+    values.setdefault("ingress", {}).setdefault("service", {})["annotations"] = {
+        "global": "set",
+        "merged": "from_global",
+    }
+
+    def set_services(deployable_details: DeployableDetails):
+        deployable_details.set_helm_values(
+            values,
+            PropertyType.Ingress,
+            {
+                "service": {
+                    "type": "NodePort",
+                    "internalTrafficPolicy": "Local",
+                    "annotations": {
+                        "legacy": "set",
+                        "merged": "from_ingress",
+                    },
+                }
+            },
+        )
+        deployable_details.set_helm_values(
+            values,
+            PropertyType.Service,
+            {
+                "type": "LoadBalancer",
+                "externalTrafficPolicy": "Local",
+                "annotations": {
+                    "component": "set",
+                    "merged": "from_component",
+                    "global": None,
+                },
+            },
+        )
+
+    iterate_deployables_ingress_parts(set_services)
+
+    templates = await make_templates(values)
+    services_by_name = dict[str, dict]()
+    for template in templates:
+        if template["kind"] == "Service":
+            services_by_name[template["metadata"]["name"]] = template
+
+    for ingress in templates:
+        if ingress["kind"] != "Ingress":
+            continue
+        for rule in ingress["spec"]["rules"]:
+            for path in rule["http"]["paths"]:
+                backend_service = path["backend"]["service"]
+                found_service = services_by_name[backend_service["name"]]
+                assert found_service["spec"].get("type") == "LoadBalancer", (
+                    f"Service {backend_service['name']} is not a LoadBalancer despite setting .service.type"
+                )
+                assert found_service["spec"].get("internalTrafficPolicy") == "Local"
+                assert found_service["spec"].get("externalTrafficPolicy") == "Local"
+                annotations = found_service["metadata"]["annotations"]
+                assert annotations["component"] == "set"
+                assert annotations["legacy"] == "set"
+                assert annotations["merged"] == "from_component"
+                assert annotations["global"] is None
