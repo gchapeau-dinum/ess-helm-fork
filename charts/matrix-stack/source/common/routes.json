@@ -19,9 +19,6 @@
       "items": {
         "$ref": "file://common/parentReference.json"
       }
-    },
-    "service": {
-      "$ref": "file://common/service.json"
     }
   }
 }

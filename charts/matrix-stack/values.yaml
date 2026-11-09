@@ -124,14 +124,6 @@ routes:
   ## Annotations to be added to all routes. Will be merged with component specific route annotations
   annotations: {}
 
-  ## How the Services behind all routes is constructed by default
-  service:
-    type: ClusterIP
-    ## Annotations to be added to all routes services. Will be merged with component specific route services annotations
-    annotations: {}
-    # External traffic policy will be configured on services of type `NodePort` and `LoadBalancer`
-    externalTrafficPolicy: Cluster
-    internalTrafficPolicy: Cluster
   ## List of existing Gateway parent refs to connect the routes to.
   ## More info: https://gateway-api.sigs.k8s.io/reference/spec/#parentreference
   # existingGateways:
@@ -759,6 +751,17 @@ matrixRTC:
 
   # Use 0 replicas to stop the MatrixRTC authoriser
   replicas: 1
+  ## How the Service for this component is constructed.
+  ## Takes precedence over ingress.service for this component.
+  # service:
+  #   type: ClusterIP
+  #   annotations: {}
+  #   # External traffic policy will be configured on services of type `NodePort` and `LoadBalancer`
+  #   externalTrafficPolicy: Cluster
+  #   internalTrafficPolicy: Cluster
+  #   # External IPs addresses of this service.
+  #   externalIPs: []
+  service: {}
   ## How this ingress should be constructed
   ingress:
     ## What hostname should be used for this Ingress
@@ -797,16 +800,6 @@ matrixRTC:
     ## Annotations to be added to this route
     annotations: {}
 
-    ## How the Service behind this route is constructed
-    # service:
-    #   type: ClusterIP
-    #   annotations: {}
-    #   # External traffic policy will be configured on services of type `NodePort` and `LoadBalancer`
-    #   externalTrafficPolicy: Cluster
-    #   internalTrafficPolicy: Cluster
-    #   # External IPs addresses of this service.
-    #   externalIPs: []
-    service: {}
     ## List of existing Gateway parent refs to connect the routes to.
     ## More info: https://gateway-api.sigs.k8s.io/reference/spec/#parentreference
     # existingGateways:
@@ -1628,6 +1621,17 @@ elementAdmin:
     ## pullSecrets:
     ## - name: dockerhub
     pullSecrets: []
+  ## How the Service for this component is constructed.
+  ## Takes precedence over ingress.service for this component.
+  # service:
+  #   type: ClusterIP
+  #   annotations: {}
+  #   # External traffic policy will be configured on services of type `NodePort` and `LoadBalancer`
+  #   externalTrafficPolicy: Cluster
+  #   internalTrafficPolicy: Cluster
+  #   # External IPs addresses of this service.
+  #   externalIPs: []
+  service: {}
   ## How this ingress should be constructed
   ingress:
     ## What hostname should be used for this Ingress
@@ -1666,16 +1670,6 @@ elementAdmin:
     ## Annotations to be added to this route
     annotations: {}
 
-    ## How the Service behind this route is constructed
-    # service:
-    #   type: ClusterIP
-    #   annotations: {}
-    #   # External traffic policy will be configured on services of type `NodePort` and `LoadBalancer`
-    #   externalTrafficPolicy: Cluster
-    #   internalTrafficPolicy: Cluster
-    #   # External IPs addresses of this service.
-    #   externalIPs: []
-    service: {}
     ## List of existing Gateway parent refs to connect the routes to.
     ## More info: https://gateway-api.sigs.k8s.io/reference/spec/#parentreference
     # existingGateways:
@@ -1961,6 +1955,17 @@ elementWeb:
     ## pullSecrets:
     ## - name: dockerhub
     pullSecrets: []
+  ## How the Service for this component is constructed.
+  ## Takes precedence over ingress.service for this component.
+  # service:
+  #   type: ClusterIP
+  #   annotations: {}
+  #   # External traffic policy will be configured on services of type `NodePort` and `LoadBalancer`
+  #   externalTrafficPolicy: Cluster
+  #   internalTrafficPolicy: Cluster
+  #   # External IPs addresses of this service.
+  #   externalIPs: []
+  service: {}
   ## How this ingress should be constructed
   ingress:
     ## What hostname should be used for this Ingress
@@ -1999,16 +2004,6 @@ elementWeb:
     ## Annotations to be added to this route
     annotations: {}
 
-    ## How the Service behind this route is constructed
-    # service:
-    #   type: ClusterIP
-    #   annotations: {}
-    #   # External traffic policy will be configured on services of type `NodePort` and `LoadBalancer`
-    #   externalTrafficPolicy: Cluster
-    #   internalTrafficPolicy: Cluster
-    #   # External IPs addresses of this service.
-    #   externalIPs: []
-    service: {}
     ## List of existing Gateway parent refs to connect the routes to.
     ## More info: https://gateway-api.sigs.k8s.io/reference/spec/#parentreference
     # existingGateways:
@@ -2632,6 +2627,18 @@ hookshot:
     ## Enable TLS for Redis/Valkey connection
     # tls: false
 
+  ## How the Service for this component is constructed.
+  ## Takes precedence over ingress.service for this component.
+  # service:
+  #   type: ClusterIP
+  #   annotations: {}
+  #   # External traffic policy will be configured on services of type `NodePort` and `LoadBalancer`
+  #   externalTrafficPolicy: Cluster
+  #   internalTrafficPolicy: Cluster
+  #   # External IPs addresses of this service.
+  #   externalIPs: []
+  service: {}
+
   ## How this ingress should be constructed
   ingress:
     ## What hostname should be used for this Ingress
@@ -2671,16 +2678,6 @@ hookshot:
     ## Annotations to be added to this route
     annotations: {}
 
-    ## How the Service behind this route is constructed
-    # service:
-    #   type: ClusterIP
-    #   annotations: {}
-    #   # External traffic policy will be configured on services of type `NodePort` and `LoadBalancer`
-    #   externalTrafficPolicy: Cluster
-    #   internalTrafficPolicy: Cluster
-    #   # External IPs addresses of this service.
-    #   externalIPs: []
-    service: {}
     ## List of existing Gateway parent refs to connect the routes to.
     ## More info: https://gateway-api.sigs.k8s.io/reference/spec/#parentreference
     # existingGateways:
@@ -3172,6 +3169,18 @@ matrixAuthenticationService:
     # ecdsaSecp384r1: {}
 
 
+  ## How the Service for this component is constructed.
+  ## Takes precedence over ingress.service for this component.
+  # service:
+  #   type: ClusterIP
+  #   annotations: {}
+  #   # External traffic policy will be configured on services of type `NodePort` and `LoadBalancer`
+  #   externalTrafficPolicy: Cluster
+  #   internalTrafficPolicy: Cluster
+  #   # External IPs addresses of this service.
+  #   externalIPs: []
+  service: {}
+
   ## How this ingress should be constructed
   ingress:
     ## What hostname should be used for this Ingress
@@ -3211,16 +3220,6 @@ matrixAuthenticationService:
     ## Annotations to be added to this route
     annotations: {}
 
-    ## How the Service behind this route is constructed
-    # service:
-    #   type: ClusterIP
-    #   annotations: {}
-    #   # External traffic policy will be configured on services of type `NodePort` and `LoadBalancer`
-    #   externalTrafficPolicy: Cluster
-    #   internalTrafficPolicy: Cluster
-    #   # External IPs addresses of this service.
-    #   externalIPs: []
-    service: {}
     ## List of existing Gateway parent refs to connect the routes to.
     ## More info: https://gateway-api.sigs.k8s.io/reference/spec/#parentreference
     # existingGateways:
@@ -6216,6 +6215,17 @@ synapse:
   # Extra initContainers to add to Synapse, as a yaml array
   extraInitContainers: []
 
+  ## How the Service for this component is constructed.
+  ## Takes precedence over ingress.service for this component.
+  # service:
+  #   type: ClusterIP
+  #   annotations: {}
+  #   # External traffic policy will be configured on services of type `NodePort` and `LoadBalancer`
+  #   externalTrafficPolicy: Cluster
+  #   internalTrafficPolicy: Cluster
+  #   # External IPs addresses of this service.
+  #   externalIPs: []
+  service: {}
   ## How this ingress should be constructed
   ingress:
     ## What hostname should be used for this Ingress
@@ -6254,16 +6264,6 @@ synapse:
     ## Annotations to be added to this route
     annotations: {}
 
-    ## How the Service behind this route is constructed
-    # service:
-    #   type: ClusterIP
-    #   annotations: {}
-    #   # External traffic policy will be configured on services of type `NodePort` and `LoadBalancer`
-    #   externalTrafficPolicy: Cluster
-    #   internalTrafficPolicy: Cluster
-    #   # External IPs addresses of this service.
-    #   externalIPs: []
-    service: {}
     ## List of existing Gateway parent refs to connect the routes to.
     ## More info: https://gateway-api.sigs.k8s.io/reference/spec/#parentreference
     # existingGateways:
@@ -6538,6 +6538,18 @@ wellKnownDelegation:
   ## Labels to add to all manifest for this component
   labels: {}
 
+  ## How the Service for this component is constructed.
+  ## Takes precedence over ingress.service for this component.
+  # service:
+  #   type: ClusterIP
+  #   annotations: {}
+  #   # External traffic policy will be configured on services of type `NodePort` and `LoadBalancer`
+  #   externalTrafficPolicy: Cluster
+  #   internalTrafficPolicy: Cluster
+  #   # External IPs addresses of this service.
+  #   externalIPs: []
+  service: {}
+
   ## How this ingress should be constructed
   ingress:
     ## What hostname should be used for this Ingress
@@ -6574,16 +6586,6 @@ wellKnownDelegation:
     ## Annotations to be added to this route
     annotations: {}
 
-    ## How the Service behind this route is constructed
-    # service:
-    #   type: ClusterIP
-    #   annotations: {}
-    #   # External traffic policy will be configured on services of type `NodePort` and `LoadBalancer`
-    #   externalTrafficPolicy: Cluster
-    #   internalTrafficPolicy: Cluster
-    #   # External IPs addresses of this service.
-    #   externalIPs: []
-    service: {}
     ## List of existing Gateway parent refs to connect the routes to.
     ## More info: https://gateway-api.sigs.k8s.io/reference/spec/#parentreference
     # existingGateways:

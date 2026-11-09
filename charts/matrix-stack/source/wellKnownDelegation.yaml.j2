@@ -9,6 +9,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 enabled: true
 
 {{ sub_schema_values.labels() }}
+{{ sub_schema_values.service() }}
 {{ sub_schema_values.ingress() }}
 {{ sub_schema_values.routes(withHost=false) }}
 

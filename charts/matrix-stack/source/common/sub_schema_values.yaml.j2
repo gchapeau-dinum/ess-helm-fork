@@ -222,6 +222,20 @@ extraObjects: {}
   pullSecrets: []
 {%- endmacro %}
 
+{% macro service(key='service') %}
+## How the Service for this component is constructed.
+## Takes precedence over ingress.service for this component.
+# {{ key }}:
+#   type: ClusterIP
+#   annotations: {}
+#   # External traffic policy will be configured on services of type `NodePort` and `LoadBalancer`
+#   externalTrafficPolicy: Cluster
+#   internalTrafficPolicy: Cluster
+#   # External IPs addresses of this service.
+#   externalIPs: []
+{{ key }}: {}
+{%- endmacro %}
+
 {% macro ingress(global=false, key='ingress') %}
 {%- if  global %}
 ## How all ingresses should be constructed by default, unless overridden
@@ -284,26 +298,6 @@ extraObjects: {}
   ## Annotations to be added to {{ 'all routes. Will be merged with component specific route annotations' if global else 'this route' }}
   annotations: {}
 
-  ## How the {{ 'Services' if global else 'Service' }} behind {{ 'all routes' if global else 'this route' }} is constructed{{ ' by default' if global else '' }}
-{%- if global %}
-  service:
-    type: ClusterIP
-    ## Annotations to be added to {{ 'all routes services. Will be merged with component specific route services annotations' if global else 'this route' }}
-    annotations: {}
-    # External traffic policy will be configured on services of type `NodePort` and `LoadBalancer`
-    externalTrafficPolicy: Cluster
-    internalTrafficPolicy: Cluster
-{%- else %}
-  # service:
-  #   type: ClusterIP
-  #   annotations: {}
-  #   # External traffic policy will be configured on services of type `NodePort` and `LoadBalancer`
-  #   externalTrafficPolicy: Cluster
-  #   internalTrafficPolicy: Cluster
-  #   # External IPs addresses of this service.
-  #   externalIPs: []
-  service: {}
-{%- endif %}
   ## List of existing Gateway parent refs to connect the routes to.
   ## More info: https://gateway-api.sigs.k8s.io/reference/spec/#parentreference
   # existingGateways:

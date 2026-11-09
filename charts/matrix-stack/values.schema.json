@@ -465,44 +465,6 @@
           "items": {
             "$ref": "#/$defs/common_parentReference"
           }
-        },
-        "service": {
-          "type": "object",
-          "required": [
-            "type",
-            "internalTrafficPolicy"
-          ],
-          "properties": {
-            "annotations": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            },
-            "type": {
-              "type": "string",
-              "enum": [
-                "ClusterIP",
-                "NodePort",
-                "LoadBalancer"
-              ]
-            },
-            "internalTrafficPolicy": {
-              "type": "string",
-              "enum": [
-                "Cluster",
-                "Local"
-              ]
-            },
-            "externalTrafficPolicy": {
-              "type": "string",
-              "enum": [
-                "Cluster",
-                "Local"
-              ]
-            }
-          },
-          "additionalProperties": false
         }
       },
       "additionalProperties": false
@@ -1346,6 +1308,9 @@
         "inboundTrafficHandler": {
           "$ref": "#/$defs/common_inboundTrafficHandler"
         },
+        "service": {
+          "$ref": "#/$defs/common_service"
+        },
         "ingress": {
           "$ref": "#/$defs/common_ingress"
         },
@@ -1771,9 +1736,6 @@
           "items": {
             "$ref": "#/$defs/common_parentReference"
           }
-        },
-        "service": {
-          "$ref": "#/$defs/common_service"
         }
       },
       "additionalProperties": false
@@ -2329,6 +2291,9 @@
         "inboundTrafficHandler": {
           "$ref": "#/$defs/common_inboundTrafficHandler"
         },
+        "service": {
+          "$ref": "#/$defs/common_service"
+        },
         "ingress": {
           "$ref": "#/$defs/common_ingress"
         },
@@ -2444,6 +2409,9 @@
         },
         "inboundTrafficHandler": {
           "$ref": "#/$defs/common_inboundTrafficHandler"
+        },
+        "service": {
+          "$ref": "#/$defs/common_service"
         },
         "ingress": {
           "$ref": "#/$defs/common_ingress"
@@ -2665,6 +2633,9 @@
         },
         "inboundTrafficHandler": {
           "$ref": "#/$defs/common_inboundTrafficHandler"
+        },
+        "service": {
+          "$ref": "#/$defs/common_service"
         },
         "ingress": {
           "$ref": "#/$defs/common_ingress"
@@ -2912,6 +2883,9 @@
         },
         "inboundTrafficHandler": {
           "$ref": "#/$defs/common_inboundTrafficHandler"
+        },
+        "service": {
+          "$ref": "#/$defs/common_service"
         },
         "ingress": {
           "$ref": "#/$defs/common_ingress"
@@ -3598,6 +3572,9 @@
         "inboundTrafficHandler": {
           "$ref": "#/$defs/common_inboundTrafficHandler"
         },
+        "service": {
+          "$ref": "#/$defs/common_service"
+        },
         "ingress": {
           "$ref": "#/$defs/synapse_ingress_with_additional_paths"
         },
@@ -3902,9 +3879,6 @@
             "$ref": "#/$defs/common_parentReference"
           }
         },
-        "service": {
-          "$ref": "#/$defs/common_service"
-        },
         "additionalPaths": {
           "type": "array",
           "items": {
@@ -4119,6 +4093,9 @@
         "inboundTrafficHandler": {
           "$ref": "#/$defs/common_inboundTrafficHandler"
         },
+        "service": {
+          "$ref": "#/$defs/common_service"
+        },
         "ingress": {
           "$ref": "#/$defs/common_ingress_without_host"
         },
@@ -4215,9 +4192,6 @@
           "items": {
             "$ref": "#/$defs/common_parentReference"
           }
-        },
-        "service": {
-          "$ref": "#/$defs/common_service"
         }
       },
       "additionalProperties": false
