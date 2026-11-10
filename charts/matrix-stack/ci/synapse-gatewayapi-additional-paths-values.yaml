@@ -1,0 +1,56 @@
+# Copyright 2025-2026 Element Creations Ltd
+#
+# SPDX-License-Identifier: AGPL-3.0-only
+
+# source_fragments: inbound-traffic-handler-gatewayapi.yaml init-secrets-minimal.yaml postgres-minimal.yaml server-name.yaml synapse-host.yaml synapse-ingress-additional-paths.yaml synapse-routes-additional-paths.yaml
+# DO NOT EDIT DIRECTLY. Edit the fragment files to add / modify / remove values
+
+# initSecrets, postgres don't have any required properties to be set and defaults to enabled
+deploymentMarkers:
+  enabled: false
+elementAdmin:
+  enabled: false
+elementWeb:
+  enabled: false
+inboundTrafficHandler: gatewayapi
+matrixAuthenticationService:
+  enabled: false
+matrixRTC:
+  enabled: false
+serverName: ess.localhost
+synapse:
+  host: synapse.ess.localhost
+  ingress:
+    additionalPaths:
+      - availability: only_externally
+        path: /_matrix/identity
+        service:
+          name: sydent
+          port:
+            number: 8080
+      - availability: blocked
+        path: /_synapse
+      - availability: internally_and_externally
+        path: /other
+        service:
+          name: something
+          port:
+            name: http
+  httpRoutes:
+    additionalPaths:
+      - availability: only_externally
+        path: /_matrix/from-routes
+        service:
+          name: routes-svc
+          port:
+            number: 8080
+      - availability: blocked
+        path: /_matrix/routes-blocked
+      - availability: internally_and_externally
+        path: /_matrix/internal
+        service:
+          name: internal-svc
+          port:
+            number: 8080
+wellKnownDelegation:
+  enabled: false

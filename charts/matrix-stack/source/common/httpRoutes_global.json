@@ -7,12 +7,15 @@
         "type": "string"
       }
     },
-    "existingGateways": {
+    "parentReferences": {
       "type": "array",
       "minItems": 1,
       "items": {
         "$ref": "file://common/parentReference.json"
       }
+    },
+    "httpsRedirect": {
+      "type": "boolean"
     }
   }
 }

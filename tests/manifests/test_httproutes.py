@@ -9,25 +9,9 @@ from . import (
     DeployableDetails,
     PropertyType,
     all_deployables_details,
-    services_values_files_to_test,
-    values_files_to_test,
+    gatewayapi_values_files_to_test,
 )
 from .utils import iterate_deployables_ingress_parts, template_to_deployable_details
-
-
-def configure_routes(values):
-    """Switch the chart to HTTPRoute and reuse each component's Ingress host."""
-    values["inboundTrafficHandler"] = "routes"
-
-    def copy_host(deployable_details: DeployableDetails):
-        if deployable_details.name == "well-known":
-            return
-        ingress_values = deployable_details.get_helm_values(values, PropertyType.Ingress) or {}
-        host = ingress_values.get("host")
-        if host:
-            deployable_details.set_helm_values(values, PropertyType.Routes, {"host": host})
-
-    iterate_deployables_ingress_parts(copy_host)
 
 
 def expected_route_hosts(values) -> list[str]:
@@ -37,13 +21,13 @@ def expected_route_hosts(values) -> list[str]:
             continue
         if not deployable_details.get_helm_values(values, PropertyType.Enabled, default_value=False):
             continue
-        # The well-known HTTPRoute is rendered with serverName, not routes.host.
+        # The well-known HTTPRoute is rendered with serverName, not the component host.
         if deployable_details.name == "well-known":
             hosts.append(values["serverName"])
             continue
-        routes_values = deployable_details.get_helm_values(values, PropertyType.Routes) or {}
-        if routes_values.get("host"):
-            hosts.append(routes_values["host"])
+        host = deployable_details.get_helm_values(values, PropertyType.Host, default_value="")
+        if host:
+            hosts.append(host)
     return hosts
 
 
@@ -59,18 +43,16 @@ def component_httproutes(templates):
         yield template
 
 
-@pytest.mark.parametrize("values_file", values_files_to_test)
+@pytest.mark.parametrize("values_file", gatewayapi_values_files_to_test)
 @pytest.mark.asyncio_cooperative
 async def test_has_httproute(values, make_templates):
-    configure_routes(values)
     for template in component_httproutes(await make_templates(values)):
         assert template_to_deployable_details(template).has_ingress
 
 
-@pytest.mark.parametrize("values_file", values_files_to_test)
+@pytest.mark.parametrize("values_file", gatewayapi_values_files_to_test)
 @pytest.mark.asyncio_cooperative
 async def test_httproute_is_expected_host(values, make_templates):
-    configure_routes(values)
     expected_hosts = expected_route_hosts(values)
 
     found_hosts = []
@@ -82,10 +64,9 @@ async def test_httproute_is_expected_host(values, make_templates):
     assert sorted(found_hosts) == sorted(expected_hosts)
 
 
-@pytest.mark.parametrize("values_file", values_files_to_test)
+@pytest.mark.parametrize("values_file", gatewayapi_values_files_to_test)
 @pytest.mark.asyncio_cooperative
 async def test_httproute_paths_are_path_prefix(values, make_templates):
-    configure_routes(values)
     for template in component_httproutes(await make_templates(values)):
         assert "rules" in template["spec"]
         assert len(template["spec"]["rules"]) > 0
@@ -95,23 +76,20 @@ async def test_httproute_paths_are_path_prefix(values, make_templates):
                 assert match["path"]["type"] == "PathPrefix"
 
 
-@pytest.mark.parametrize("values_file", values_files_to_test - services_values_files_to_test)
+@pytest.mark.parametrize("values_file", gatewayapi_values_files_to_test)
 @pytest.mark.asyncio_cooperative
 async def test_no_httproute_annotations_by_default(values, make_templates):
-    configure_routes(values)
     for template in component_httproutes(await make_templates(values)):
         assert "annotations" not in template["metadata"]
 
 
-@pytest.mark.parametrize("values_file", values_files_to_test)
+@pytest.mark.parametrize("values_file", gatewayapi_values_files_to_test)
 @pytest.mark.asyncio_cooperative
 async def test_renders_component_httproute_annotations(values, make_templates):
-    configure_routes(values)
-
     def set_annotations(deployable_details: DeployableDetails):
         deployable_details.set_helm_values(
             values,
-            PropertyType.Routes,
+            PropertyType.HttpRoutes,
             {"annotations": {"component": "set"}},
         )
 
@@ -121,25 +99,22 @@ async def test_renders_component_httproute_annotations(values, make_templates):
         assert template["metadata"]["annotations"]["component"] == "set"
 
 
-@pytest.mark.parametrize("values_file", values_files_to_test)
+@pytest.mark.parametrize("values_file", gatewayapi_values_files_to_test)
 @pytest.mark.asyncio_cooperative
 async def test_renders_global_httproute_annotations(values, make_templates):
-    configure_routes(values)
-    values.setdefault("routes", {})["annotations"] = {"global": "set"}
+    values.setdefault("httpRoutes", {})["annotations"] = {"global": "set"}
 
     for template in component_httproutes(await make_templates(values)):
         assert template["metadata"]["annotations"]["global"] == "set"
 
 
-@pytest.mark.parametrize("values_file", values_files_to_test)
+@pytest.mark.parametrize("values_file", gatewayapi_values_files_to_test)
 @pytest.mark.asyncio_cooperative
 async def test_merges_global_and_component_httproute_annotations(values, make_templates):
-    configure_routes(values)
-
     def set_annotations(deployable_details: DeployableDetails):
         deployable_details.set_helm_values(
             values,
-            PropertyType.Routes,
+            PropertyType.HttpRoutes,
             {
                 "annotations": {
                     "component": "set",
@@ -150,7 +125,7 @@ async def test_merges_global_and_component_httproute_annotations(values, make_te
         )
 
     iterate_deployables_ingress_parts(set_annotations)
-    values.setdefault("routes", {})["annotations"] = {
+    values.setdefault("httpRoutes", {})["annotations"] = {
         "global": "set",
         "merged": "from_global",
     }
@@ -163,24 +138,21 @@ async def test_merges_global_and_component_httproute_annotations(values, make_te
         assert "global" not in annotations
 
 
-@pytest.mark.parametrize("values_file", values_files_to_test)
+@pytest.mark.parametrize("values_file", gatewayapi_values_files_to_test)
 @pytest.mark.asyncio_cooperative
 async def test_no_httproute_parent_refs_by_default(values, make_templates):
-    configure_routes(values)
     for template in component_httproutes(await make_templates(values)):
         assert "parentRefs" not in template["spec"]
 
 
-@pytest.mark.parametrize("values_file", values_files_to_test)
+@pytest.mark.parametrize("values_file", gatewayapi_values_files_to_test)
 @pytest.mark.asyncio_cooperative
-async def test_uses_component_existing_gateways(values, make_templates):
-    configure_routes(values)
-
+async def test_uses_component_http_route_parent_refs(values, make_templates):
     def set_parent_refs(deployable_details: DeployableDetails):
         deployable_details.set_helm_values(
             values,
-            PropertyType.Routes,
-            {"existingGateways": [{"name": "component", "sectionName": "https"}]},
+            PropertyType.HttpRoutes,
+            {"parentReferences": [{"name": "component", "sectionName": "https"}]},
         )
 
     iterate_deployables_ingress_parts(set_parent_refs)
@@ -189,48 +161,94 @@ async def test_uses_component_existing_gateways(values, make_templates):
         assert template["spec"]["parentRefs"] == [{"name": "component", "sectionName": "https"}]
 
 
-@pytest.mark.parametrize("values_file", values_files_to_test)
+@pytest.mark.parametrize("values_file", gatewayapi_values_files_to_test)
 @pytest.mark.asyncio_cooperative
-async def test_uses_global_existing_gateways(values, make_templates):
-    configure_routes(values)
-    values.setdefault("routes", {})["existingGateways"] = [{"name": "global", "namespace": "gateway-ns"}]
+async def test_uses_global_http_route_parent_refs(values, make_templates):
+    values.setdefault("httpRoutes", {})["parentReferences"] = [{"name": "global", "namespace": "gateway-ns"}]
 
     for template in component_httproutes(await make_templates(values)):
         assert template["spec"]["parentRefs"] == [{"name": "global", "namespace": "gateway-ns"}]
 
 
-@pytest.mark.parametrize("values_file", values_files_to_test)
+@pytest.mark.parametrize("values_file", gatewayapi_values_files_to_test)
 @pytest.mark.asyncio_cooperative
-async def test_component_existing_gateways_beats_global(values, make_templates):
-    configure_routes(values)
-
+async def test_component_http_route_parent_refs_beats_global(values, make_templates):
     def set_parent_refs(deployable_details: DeployableDetails):
         deployable_details.set_helm_values(
             values,
-            PropertyType.Routes,
-            {"existingGateways": [{"name": "component"}]},
+            PropertyType.HttpRoutes,
+            {"parentReferences": [{"name": "component"}]},
         )
 
     iterate_deployables_ingress_parts(set_parent_refs)
-    values.setdefault("routes", {})["existingGateways"] = [{"name": "global"}]
+    values.setdefault("httpRoutes", {})["parentReferences"] = [{"name": "global"}]
 
     for template in component_httproutes(await make_templates(values)):
         assert template["spec"]["parentRefs"] == [{"name": "component"}]
 
 
-@pytest.mark.parametrize("values_file", values_files_to_test - services_values_files_to_test)
+def synapse_route_paths(templates):
+    for template in templates:
+        if template["kind"] != "HTTPRoute":
+            continue
+        if template["metadata"]["labels"].get("app.kubernetes.io/name") != "synapse":
+            continue
+        for rule in template["spec"]["rules"]:
+            for match in rule["matches"]:
+                yield match["path"]["value"]
+
+
+def synapse_ingress_paths(templates):
+    for template in templates:
+        if template["kind"] != "Ingress":
+            continue
+        if template["metadata"]["labels"].get("app.kubernetes.io/name") != "synapse":
+            continue
+        for rule in template["spec"]["rules"]:
+            for path in rule["http"]["paths"]:
+                yield path["path"]
+
+
+def haproxy_cfg(templates):
+    for template in templates:
+        if template["kind"] == "ConfigMap" and "haproxy.cfg" in template.get("data", {}):
+            if template_to_deployable_details(template).name == "haproxy":
+                return template["data"]["haproxy.cfg"]
+    raise AssertionError("No HAProxy ConfigMap found")
+
+
+@pytest.mark.parametrize("values_file", ["synapse-ingress-additional-paths-values.yaml"])
+@pytest.mark.asyncio_cooperative
+async def test_synapse_ingress_additional_paths_ignore_routes_paths(templates):
+    rendered_paths = set(synapse_ingress_paths(templates))
+    assert "/_matrix/identity" in rendered_paths
+    assert "/_matrix/from-routes" not in rendered_paths
+    config = haproxy_cfg(templates)
+    assert "path_beg /other" in config
+    assert "path_beg /_matrix/internal" not in config
+
+
+@pytest.mark.parametrize("values_file", ["synapse-gatewayapi-additional-paths-values.yaml"])
+@pytest.mark.asyncio_cooperative
+async def test_synapse_routes_additional_paths_ignore_ingress_paths(templates):
+    rendered_paths = set(synapse_route_paths(templates))
+    assert "/_matrix/from-routes" in rendered_paths
+    assert "/_matrix/identity" not in rendered_paths
+    config = haproxy_cfg(templates)
+    assert "path_beg /_matrix/internal" in config
+    assert "path_beg /other" not in config
+
+
+@pytest.mark.parametrize("values_file", gatewayapi_values_files_to_test)
 @pytest.mark.asyncio_cooperative
 async def test_no_httproute_when_handler_is_none(values, make_templates):
-    configure_routes(values)
     values["inboundTrafficHandler"] = "none"
     assert list(component_httproutes(await make_templates(values))) == []
 
 
-@pytest.mark.parametrize("values_file", values_files_to_test - services_values_files_to_test)
+@pytest.mark.parametrize("values_file", gatewayapi_values_files_to_test)
 @pytest.mark.asyncio_cooperative
 async def test_component_handler_none_beats_global_routes(values, make_templates):
-    configure_routes(values)
-
     def set_handler_none(deployable_details: DeployableDetails):
         deployable_details.set_helm_values(values, PropertyType.InboundTrafficHandler, "none")
 

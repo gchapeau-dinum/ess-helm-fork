@@ -1,0 +1,45 @@
+# Copyright 2026 Element Creations Ltd
+#
+# SPDX-License-Identifier: AGPL-3.0-only
+
+# This fragment is named so that it merges after the pytest extras.
+# Those extras set ingress.host. Gateway API uses the component host instead.
+inboundTrafficHandler: gatewayapi
+
+gateway:
+  create: true
+  className: traefik
+
+elementAdmin:
+  host: admin.{{ $.Values.serverName }}
+  ingress:
+    host: null
+    tlsSecret: null
+
+elementWeb:
+  host: element.{{ $.Values.serverName }}
+  ingress:
+    host: null
+    tlsSecret: null
+
+matrixAuthenticationService:
+  host: mas.{{ $.Values.serverName }}
+  ingress:
+    host: null
+    tlsSecret: null
+
+matrixRTC:
+  host: mrtc.{{ $.Values.serverName }}
+  ingress:
+    host: null
+    tlsSecret: null
+
+synapse:
+  host: synapse.{{ $.Values.serverName }}
+  ingress:
+    host: null
+    tlsSecret: null
+
+wellKnownDelegation:
+  ingress:
+    tlsSecret: null

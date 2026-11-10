@@ -34,7 +34,7 @@ certManager: {}
 # serverName: ess.localhost
 {{ labels(global=true) }}
 {{ ingress(global=true) }}
-{{ routes(global=true, withHost=false) }}
+{{ httpRoutes(global=true) }}
 
 ## Common image properties that are applied as defaults to all components.
 image:
@@ -80,10 +80,8 @@ gateway:
   tlsEnabled: true
   ## Secret containing the certificate and key for the generated Gateway listeners
   # tlsSecret:
-  ## Skip the HTTP to HTTPS redirect served by the generated Gateway by setting true
-  disableHTTPRedirect: false
 
-## Set the default inbound traffic handler type. Options are ingress | routes | none
+## Set the default inbound traffic handler type. Options are ingress | gatewayapi | none
 inboundTrafficHandler: ingress
 
 ## A dictionary of extra objects to be rendered into the cluster
@@ -237,14 +235,15 @@ extraObjects: {}
 {%- endmacro %}
 
 {% macro ingress(global=false, key='ingress') %}
-{%- if  global %}
+{%- if global %}
 ## How all ingresses should be constructed by default, unless overridden
 {%- else %}
 ## How this ingress should be constructed
 {%- endif %}
 {{ key }}:
 {%- if not global %}
-  ## What hostname should be used for this Ingress
+  ## What hostname should be used for this Ingress.
+  ## The component `host` takes precedence. This value remains for compatibility.
   # host:
 {% endif %}
   ## Annotations to be added to {{ 'all Ingresses. Will be merged with component specific Ingress annotations' if global else 'this Ingress' }}
@@ -284,26 +283,36 @@ extraObjects: {}
   # controllerType:
 {%- endmacro %}
 
-{% macro routes(global=false, withHost=true, key='routes') %}
-{%- if  global %}
+{% macro componentHost() %}
+## Hostname exposed by this component.
+## Takes precedence over ingress.host.
+# host:
+{%- endmacro %}
+
+{% macro httpRoutes(global=false, key='httpRoutes') %}
+{%- if global %}
 ## How all routes should be constructed by default, unless overridden
 {%- else %}
 ## How this component's routes should be constructed
 {%- endif %}
 {{ key }}:
-{%- if withHost %}
-  ## What hostname should be used for this component
-  # host:
-{% endif %}
   ## Annotations to be added to {{ 'all routes. Will be merged with component specific route annotations' if global else 'this route' }}
   annotations: {}
 
-  ## List of existing Gateway parent refs to connect the routes to.
+  ## HTTPRoute parentRefs. When unset and gateway.create is true, the route attaches to the generated Gateway.
   ## More info: https://gateway-api.sigs.k8s.io/reference/spec/#parentreference
-  # existingGateways:
+  # parentReferences:
   # - name: ess
   #   namespace: default
   #   sectionName: https
+
+  ## Redirect this route's HTTP requests to HTTPS on the generated Gateway.
+  ## Requires gateway.tlsEnabled. A component value overrides the global one.
+{%- if global %}
+  httpsRedirect: true
+{%- else %}
+  # httpsRedirect: true
+{%- endif %}
 {%- endmacro %}
 
 {% macro labels(global=false, key='labels') %}

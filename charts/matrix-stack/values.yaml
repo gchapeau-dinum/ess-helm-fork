@@ -120,16 +120,20 @@ ingress:
   # controllerType:
 
 ## How all routes should be constructed by default, unless overridden
-routes:
+httpRoutes:
   ## Annotations to be added to all routes. Will be merged with component specific route annotations
   annotations: {}
 
-  ## List of existing Gateway parent refs to connect the routes to.
+  ## HTTPRoute parentRefs. When unset and gateway.create is true, the route attaches to the generated Gateway.
   ## More info: https://gateway-api.sigs.k8s.io/reference/spec/#parentreference
-  # existingGateways:
+  # parentReferences:
   # - name: ess
   #   namespace: default
   #   sectionName: https
+
+  ## Redirect this route's HTTP requests to HTTPS on the generated Gateway.
+  ## Requires gateway.tlsEnabled. A component value overrides the global one.
+  httpsRedirect: true
 
 ## Common image properties that are applied as defaults to all components.
 image:
@@ -279,10 +283,8 @@ gateway:
   tlsEnabled: true
   ## Secret containing the certificate and key for the generated Gateway listeners
   # tlsSecret:
-  ## Skip the HTTP to HTTPS redirect served by the generated Gateway by setting true
-  disableHTTPRedirect: false
 
-## Set the default inbound traffic handler type. Options are ingress | routes | none
+## Set the default inbound traffic handler type. Options are ingress | gatewayapi | none
 inboundTrafficHandler: ingress
 
 ## A dictionary of extra objects to be rendered into the cluster
@@ -762,9 +764,13 @@ matrixRTC:
   #   # External IPs addresses of this service.
   #   externalIPs: []
   service: {}
+  ## Hostname exposed by this component.
+  ## Takes precedence over ingress.host.
+  # host:
   ## How this ingress should be constructed
   ingress:
-    ## What hostname should be used for this Ingress
+    ## What hostname should be used for this Ingress.
+    ## The component `host` takes precedence. This value remains for compatibility.
     # host:
 
     ## Annotations to be added to this Ingress
@@ -793,19 +799,20 @@ matrixRTC:
     ## This can be set to `ingress-nginx`.
     # controllerType:
   ## How this component's routes should be constructed
-  routes:
-    ## What hostname should be used for this component
-    # host:
-
+  httpRoutes:
     ## Annotations to be added to this route
     annotations: {}
 
-    ## List of existing Gateway parent refs to connect the routes to.
+    ## HTTPRoute parentRefs. When unset and gateway.create is true, the route attaches to the generated Gateway.
     ## More info: https://gateway-api.sigs.k8s.io/reference/spec/#parentreference
-    # existingGateways:
+    # parentReferences:
     # - name: ess
     #   namespace: default
     #   sectionName: https
+
+    ## Redirect this route's HTTP requests to HTTPS on the generated Gateway.
+    ## Requires gateway.tlsEnabled. A component value overrides the global one.
+    # httpsRedirect: true
   # Details of the image to be used
   image:
     ## The host and (optional) port of the container image registry for this component.
@@ -1632,9 +1639,13 @@ elementAdmin:
   #   # External IPs addresses of this service.
   #   externalIPs: []
   service: {}
+  ## Hostname exposed by this component.
+  ## Takes precedence over ingress.host.
+  # host:
   ## How this ingress should be constructed
   ingress:
-    ## What hostname should be used for this Ingress
+    ## What hostname should be used for this Ingress.
+    ## The component `host` takes precedence. This value remains for compatibility.
     # host:
 
     ## Annotations to be added to this Ingress
@@ -1663,19 +1674,20 @@ elementAdmin:
     ## This can be set to `ingress-nginx`.
     # controllerType:
   ## How this component's routes should be constructed
-  routes:
-    ## What hostname should be used for this component
-    # host:
-
+  httpRoutes:
     ## Annotations to be added to this route
     annotations: {}
 
-    ## List of existing Gateway parent refs to connect the routes to.
+    ## HTTPRoute parentRefs. When unset and gateway.create is true, the route attaches to the generated Gateway.
     ## More info: https://gateway-api.sigs.k8s.io/reference/spec/#parentreference
-    # existingGateways:
+    # parentReferences:
     # - name: ess
     #   namespace: default
     #   sectionName: https
+
+    ## Redirect this route's HTTP requests to HTTPS on the generated Gateway.
+    ## Requires gateway.tlsEnabled. A component value overrides the global one.
+    # httpsRedirect: true
   ## Labels to add to all manifest for this component
   labels: {}
   ## Defines the annotations to add to the workload
@@ -1966,9 +1978,13 @@ elementWeb:
   #   # External IPs addresses of this service.
   #   externalIPs: []
   service: {}
+  ## Hostname exposed by this component.
+  ## Takes precedence over ingress.host.
+  # host:
   ## How this ingress should be constructed
   ingress:
-    ## What hostname should be used for this Ingress
+    ## What hostname should be used for this Ingress.
+    ## The component `host` takes precedence. This value remains for compatibility.
     # host:
 
     ## Annotations to be added to this Ingress
@@ -1997,19 +2013,20 @@ elementWeb:
     ## This can be set to `ingress-nginx`.
     # controllerType:
   ## How this component's routes should be constructed
-  routes:
-    ## What hostname should be used for this component
-    # host:
-
+  httpRoutes:
     ## Annotations to be added to this route
     annotations: {}
 
-    ## List of existing Gateway parent refs to connect the routes to.
+    ## HTTPRoute parentRefs. When unset and gateway.create is true, the route attaches to the generated Gateway.
     ## More info: https://gateway-api.sigs.k8s.io/reference/spec/#parentreference
-    # existingGateways:
+    # parentReferences:
     # - name: ess
     #   namespace: default
     #   sectionName: https
+
+    ## Redirect this route's HTTP requests to HTTPS on the generated Gateway.
+    ## Requires gateway.tlsEnabled. A component value overrides the global one.
+    # httpsRedirect: true
   ## Labels to add to all manifest for this component
   labels: {}
   ## Defines the annotations to add to the workload
@@ -2639,9 +2656,14 @@ hookshot:
   #   externalIPs: []
   service: {}
 
+  ## Hostname exposed by this component.
+  ## Takes precedence over ingress.host.
+  # host:
+
   ## How this ingress should be constructed
   ingress:
-    ## What hostname should be used for this Ingress
+    ## What hostname should be used for this Ingress.
+    ## The component `host` takes precedence. This value remains for compatibility.
     # host:
 
     ## Annotations to be added to this Ingress
@@ -2671,19 +2693,20 @@ hookshot:
     # controllerType:
 
   ## How this component's routes should be constructed
-  routes:
-    ## What hostname should be used for this component
-    # host:
-
+  httpRoutes:
     ## Annotations to be added to this route
     annotations: {}
 
-    ## List of existing Gateway parent refs to connect the routes to.
+    ## HTTPRoute parentRefs. When unset and gateway.create is true, the route attaches to the generated Gateway.
     ## More info: https://gateway-api.sigs.k8s.io/reference/spec/#parentreference
-    # existingGateways:
+    # parentReferences:
     # - name: ess
     #   namespace: default
     #   sectionName: https
+
+    ## Redirect this route's HTTP requests to HTTPS on the generated Gateway.
+    ## Requires gateway.tlsEnabled. A component value overrides the global one.
+    # httpsRedirect: true
 
   ## Additional configuration to provide to Hookshot.
   ## You can, if you whish, override it in the additional config.
@@ -3181,9 +3204,14 @@ matrixAuthenticationService:
   #   externalIPs: []
   service: {}
 
+  ## Hostname exposed by this component.
+  ## Takes precedence over ingress.host.
+  # host:
+
   ## How this ingress should be constructed
   ingress:
-    ## What hostname should be used for this Ingress
+    ## What hostname should be used for this Ingress.
+    ## The component `host` takes precedence. This value remains for compatibility.
     # host:
 
     ## Annotations to be added to this Ingress
@@ -3213,19 +3241,20 @@ matrixAuthenticationService:
     # controllerType:
 
   ## How this component's routes should be constructed
-  routes:
-    ## What hostname should be used for this component
-    # host:
-
+  httpRoutes:
     ## Annotations to be added to this route
     annotations: {}
 
-    ## List of existing Gateway parent refs to connect the routes to.
+    ## HTTPRoute parentRefs. When unset and gateway.create is true, the route attaches to the generated Gateway.
     ## More info: https://gateway-api.sigs.k8s.io/reference/spec/#parentreference
-    # existingGateways:
+    # parentReferences:
     # - name: ess
     #   namespace: default
     #   sectionName: https
+
+    ## Redirect this route's HTTP requests to HTTPS on the generated Gateway.
+    ## Requires gateway.tlsEnabled. A component value overrides the global one.
+    # httpsRedirect: true
 
   ## Kubernetes resources to allocate to each instance.
   resources:
@@ -6226,9 +6255,13 @@ synapse:
   #   # External IPs addresses of this service.
   #   externalIPs: []
   service: {}
+  ## Hostname exposed by this component.
+  ## Takes precedence over ingress.host.
+  # host:
   ## How this ingress should be constructed
   ingress:
-    ## What hostname should be used for this Ingress
+    ## What hostname should be used for this Ingress.
+    ## The component `host` takes precedence. This value remains for compatibility.
     # host:
 
     ## Annotations to be added to this Ingress
@@ -6257,19 +6290,20 @@ synapse:
     ## This can be set to `ingress-nginx`.
     # controllerType:
   ## How this component's routes should be constructed
-  routes:
-    ## What hostname should be used for this component
-    # host:
-
+  httpRoutes:
     ## Annotations to be added to this route
     annotations: {}
 
-    ## List of existing Gateway parent refs to connect the routes to.
+    ## HTTPRoute parentRefs. When unset and gateway.create is true, the route attaches to the generated Gateway.
     ## More info: https://gateway-api.sigs.k8s.io/reference/spec/#parentreference
-    # existingGateways:
+    # parentReferences:
     # - name: ess
     #   namespace: default
     #   sectionName: https
+
+    ## Redirect this route's HTTP requests to HTTPS on the generated Gateway.
+    ## Requires gateway.tlsEnabled. A component value overrides the global one.
+    # httpsRedirect: true
   ## Labels to add to all manifest for this component
   labels: {}
   ## Defines the annotations to add to the workload
@@ -6552,7 +6586,8 @@ wellKnownDelegation:
 
   ## How this ingress should be constructed
   ingress:
-    ## What hostname should be used for this Ingress
+    ## What hostname should be used for this Ingress.
+    ## The component `host` takes precedence. This value remains for compatibility.
     # host:
 
     ## Annotations to be added to this Ingress
@@ -6582,16 +6617,20 @@ wellKnownDelegation:
     # controllerType:
 
   ## How this component's routes should be constructed
-  routes:
+  httpRoutes:
     ## Annotations to be added to this route
     annotations: {}
 
-    ## List of existing Gateway parent refs to connect the routes to.
+    ## HTTPRoute parentRefs. When unset and gateway.create is true, the route attaches to the generated Gateway.
     ## More info: https://gateway-api.sigs.k8s.io/reference/spec/#parentreference
-    # existingGateways:
+    # parentReferences:
     # - name: ess
     #   namespace: default
     #   sectionName: https
+
+    ## Redirect this route's HTTP requests to HTTPS on the generated Gateway.
+    ## Requires gateway.tlsEnabled. A component value overrides the global one.
+    # httpsRedirect: true
 
   ## If ElementWeb is deployed, the base domain will redirect to it's ingress host by default
   ## If ElementWeb is not deployed or this is disabled, no base domain URL redirect will be set.

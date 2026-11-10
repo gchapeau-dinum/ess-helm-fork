@@ -21,6 +21,7 @@ class PropertyType(Enum):
     Env = "extraEnv"
     EphemeralStorages = "ephemeralStorages"
     ExposedServices = "exposedServices"
+    Host = "host"
     HostAliases = "hostAliases"
     Image = "image"
     InboundTrafficHandler = "inboundTrafficHandler"
@@ -37,7 +38,7 @@ class PropertyType(Enum):
     SchedulerName = "schedulerName"
     Service = "service"
     Replicas = "replicas"
-    Routes = "routes"
+    HttpRoutes = "httpRoutes"
     ReadinessProbe = "readinessProbe"
     Resources = "resources"
     StartupProbe = "startupProbe"
@@ -886,3 +887,15 @@ values_files_to_test = (
 )
 
 services_values_files_to_test = set(_extra_services_values_files_to_test)
+
+# Values that already select the Gateway API handler and set each component host.
+# HTTPRoute and Gateway tests render these files directly.
+gatewayapi_values_files_to_test = {
+    "all-enabled-gatewayapi-values.yaml",
+    "matrix-authentication-service-synapse-syn2mas-dry-run-secrets-in-helm-gatewayapi-values.yaml",
+    "matrix-rtc-gatewayapi-values.yaml",
+    "synapse-gatewayapi-additional-paths-values.yaml",
+    "synapse-gatewayapi-values.yaml",
+    "synapse-hookshot-gatewayapi-values.yaml",
+    "well-known-gatewayapi-values.yaml",
+}

@@ -155,13 +155,16 @@
     "inboundTrafficHandler": {
       "$ref": "file://common/inboundTrafficHandler.json"
     },
+    "host": {
+      "type": "string"
+    },
     "service": {
       "$ref": "file://common/service.json"
     },
     "ingress": {
       "$ref": "file://synapse/ingress_with_additional_paths.json"
     },
-    "routes": {
+    "httpRoutes": {
       "$ref": "file://synapse/routes_with_additional_paths.json"
     },
     "image": {

@@ -107,8 +107,8 @@
     "ingress": {
       "$ref": "#/$defs/common_ingress_global"
     },
-    "routes": {
-      "$ref": "#/$defs/common_routes_global"
+    "httpRoutes": {
+      "$ref": "#/$defs/common_httpRoutes_global"
     },
     "storage": {
       "$ref": "#/$defs/common_storage_global"
@@ -187,9 +187,6 @@
         },
         "tlsSecret": {
           "type": "string"
-        },
-        "disableHTTPRedirect": {
-          "type": "boolean"
         }
       },
       "additionalProperties": false
@@ -381,7 +378,7 @@
       "type": "string",
       "enum": [
         "ingress",
-        "routes",
+        "gatewayapi",
         "none"
       ]
     },
@@ -450,7 +447,7 @@
       },
       "additionalProperties": false
     },
-    "common_routes_global": {
+    "common_httpRoutes_global": {
       "type": "object",
       "properties": {
         "annotations": {
@@ -459,12 +456,15 @@
             "type": "string"
           }
         },
-        "existingGateways": {
+        "parentReferences": {
           "type": "array",
           "minItems": 1,
           "items": {
             "$ref": "#/$defs/common_parentReference"
           }
+        },
+        "httpsRedirect": {
+          "type": "boolean"
         }
       },
       "additionalProperties": false
@@ -1308,14 +1308,17 @@
         "inboundTrafficHandler": {
           "$ref": "#/$defs/common_inboundTrafficHandler"
         },
+        "host": {
+          "type": "string"
+        },
         "service": {
           "$ref": "#/$defs/common_service"
         },
         "ingress": {
           "$ref": "#/$defs/common_ingress"
         },
-        "routes": {
-          "$ref": "#/$defs/common_routes"
+        "httpRoutes": {
+          "$ref": "#/$defs/common_httpRoutes"
         },
         "labels": {
           "$ref": "#/$defs/common_labels"
@@ -1715,7 +1718,7 @@
       },
       "additionalProperties": false
     },
-    "common_routes": {
+    "common_httpRoutes": {
       "type": "object",
       "properties": {
         "annotations": {
@@ -1727,15 +1730,15 @@
             ]
           }
         },
-        "host": {
-          "type": "string"
-        },
-        "existingGateways": {
+        "parentReferences": {
           "type": "array",
           "minItems": 1,
           "items": {
             "$ref": "#/$defs/common_parentReference"
           }
+        },
+        "httpsRedirect": {
+          "type": "boolean"
         }
       },
       "additionalProperties": false
@@ -2291,14 +2294,17 @@
         "inboundTrafficHandler": {
           "$ref": "#/$defs/common_inboundTrafficHandler"
         },
+        "host": {
+          "type": "string"
+        },
         "service": {
           "$ref": "#/$defs/common_service"
         },
         "ingress": {
           "$ref": "#/$defs/common_ingress"
         },
-        "routes": {
-          "$ref": "#/$defs/common_routes"
+        "httpRoutes": {
+          "$ref": "#/$defs/common_httpRoutes"
         },
         "labels": {
           "$ref": "#/$defs/common_labels"
@@ -2410,14 +2416,17 @@
         "inboundTrafficHandler": {
           "$ref": "#/$defs/common_inboundTrafficHandler"
         },
+        "host": {
+          "type": "string"
+        },
         "service": {
           "$ref": "#/$defs/common_service"
         },
         "ingress": {
           "$ref": "#/$defs/common_ingress"
         },
-        "routes": {
-          "$ref": "#/$defs/common_routes"
+        "httpRoutes": {
+          "$ref": "#/$defs/common_httpRoutes"
         },
         "labels": {
           "$ref": "#/$defs/common_labels"
@@ -2634,14 +2643,17 @@
         "inboundTrafficHandler": {
           "$ref": "#/$defs/common_inboundTrafficHandler"
         },
+        "host": {
+          "type": "string"
+        },
         "service": {
           "$ref": "#/$defs/common_service"
         },
         "ingress": {
           "$ref": "#/$defs/common_ingress"
         },
-        "routes": {
-          "$ref": "#/$defs/common_routes"
+        "httpRoutes": {
+          "$ref": "#/$defs/common_httpRoutes"
         },
         "image": {
           "$ref": "#/$defs/common_image"
@@ -2884,14 +2896,17 @@
         "inboundTrafficHandler": {
           "$ref": "#/$defs/common_inboundTrafficHandler"
         },
+        "host": {
+          "type": "string"
+        },
         "service": {
           "$ref": "#/$defs/common_service"
         },
         "ingress": {
           "$ref": "#/$defs/common_ingress"
         },
-        "routes": {
-          "$ref": "#/$defs/common_routes"
+        "httpRoutes": {
+          "$ref": "#/$defs/common_httpRoutes"
         },
         "image": {
           "$ref": "#/$defs/common_image"
@@ -3572,13 +3587,16 @@
         "inboundTrafficHandler": {
           "$ref": "#/$defs/common_inboundTrafficHandler"
         },
+        "host": {
+          "type": "string"
+        },
         "service": {
           "$ref": "#/$defs/common_service"
         },
         "ingress": {
           "$ref": "#/$defs/synapse_ingress_with_additional_paths"
         },
-        "routes": {
+        "httpRoutes": {
           "$ref": "#/$defs/synapse_routes_with_additional_paths"
         },
         "image": {
@@ -3869,15 +3887,15 @@
             ]
           }
         },
-        "host": {
-          "type": "string"
-        },
-        "existingGateways": {
+        "parentReferences": {
           "type": "array",
           "minItems": 1,
           "items": {
             "$ref": "#/$defs/common_parentReference"
           }
+        },
+        "httpsRedirect": {
+          "type": "boolean"
         },
         "additionalPaths": {
           "type": "array",
@@ -3911,32 +3929,10 @@
                   },
                   "port": {
                     "type": "object",
-                    "oneOf": [
-                      {
-                        "required": [
-                          "name"
-                        ],
-                        "not": {
-                          "required": [
-                            "number"
-                          ]
-                        }
-                      },
-                      {
-                        "required": [
-                          "number"
-                        ],
-                        "not": {
-                          "required": [
-                            "name"
-                          ]
-                        }
-                      }
+                    "required": [
+                      "number"
                     ],
                     "properties": {
-                      "name": {
-                        "type": "string"
-                      },
                       "number": {
                         "type": "integer"
                       }
@@ -4099,8 +4095,8 @@
         "ingress": {
           "$ref": "#/$defs/common_ingress_without_host"
         },
-        "routes": {
-          "$ref": "#/$defs/common_routes_without_host"
+        "httpRoutes": {
+          "$ref": "#/$defs/common_httpRoutes"
         },
         "labels": {
           "$ref": "#/$defs/common_labels"
@@ -4170,28 +4166,6 @@
         },
         "service": {
           "$ref": "#/$defs/common_service"
-        }
-      },
-      "additionalProperties": false
-    },
-    "common_routes_without_host": {
-      "type": "object",
-      "properties": {
-        "annotations": {
-          "type": "object",
-          "additionalProperties": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        },
-        "existingGateways": {
-          "type": "array",
-          "minItems": 1,
-          "items": {
-            "$ref": "#/$defs/common_parentReference"
-          }
         }
       },
       "additionalProperties": false

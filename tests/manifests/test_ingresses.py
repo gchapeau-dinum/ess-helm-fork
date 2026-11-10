@@ -78,6 +78,27 @@ async def test_ingress_is_expected_host(values, templates):
 
 @pytest.mark.parametrize("values_file", values_files_to_test)
 @pytest.mark.asyncio_cooperative
+async def test_component_host_beats_ingress_host(values, make_templates):
+    def set_component_host(deployable_details: DeployableDetails):
+        # Well-known is served on serverName. Its schema has no component host.
+        if deployable_details.name == "well-known":
+            return
+        deployable_details.set_helm_values(values, PropertyType.Host, f"{deployable_details.name}.example.com")
+
+    iterate_deployables_ingress_parts(set_component_host)
+
+    for template in await make_templates(values):
+        if template["kind"] != "Ingress":
+            continue
+        deployable_details = template_to_deployable_details(template)
+        if deployable_details.name == "well-known":
+            continue
+        for rule in template["spec"]["rules"]:
+            assert rule["host"] == f"{deployable_details.name}.example.com"
+
+
+@pytest.mark.parametrize("values_file", values_files_to_test)
+@pytest.mark.asyncio_cooperative
 async def test_ingress_paths_are_all_prefix(templates):
     for template in templates:
         if template["kind"] == "Ingress":

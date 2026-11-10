@@ -1,0 +1,166 @@
+# Copyright 2025-2026 Element Creations Ltd
+#
+# SPDX-License-Identifier: AGPL-3.0-only
+
+# source_fragments: deployment-markers-minimal.yaml deployment-markers-pytest-extras.yaml element-admin-minimal.yaml element-admin-pytest-extras.yaml element-web-minimal.yaml element-web-pytest-extras.yaml hookshot-minimal.yaml hookshot-pytest-extras.yaml init-secrets-minimal.yaml init-secrets-pytest-extras.yaml matrix-authentication-service-minimal.yaml matrix-authentication-service-pytest-extras.yaml matrix-rtc-minimal.yaml matrix-rtc-pytest-extras.yaml matrix-rtc-turn-tls.yaml postgres-minimal.yaml server-name.yaml synapse-minimal.yaml synapse-pytest-base-extras.yaml valkey-pytest-base-extras.yaml well-known-minimal.yaml well-known-pytest-base-extras.yaml well-known-pytest-gatewayapi.yaml
+# DO NOT EDIT DIRECTLY. Edit the fragment files to add / modify / remove values
+
+# wellKnownDelegation don't have any required properties to be set and defaults to enabled
+deploymentMarkers:
+  annotations:
+    has-no-service-monitor: "true"
+  podSecurityContext:
+    runAsGroup: 0
+elementAdmin:
+  annotations:
+    has-no-service-monitor: "true"
+  host: admin.{{ $.Values.serverName }}
+  podSecurityContext:
+    runAsGroup: 0
+  replicas: 2
+elementWeb:
+  additional:
+    user-config.json: |
+      {
+        "default_server_config": {
+          "m.homeserver": {
+            "base_url": "https://synapse.{{ $.Values.serverName }}"
+          }
+        },
+        "some_key": {
+          "some_value": "https://test.{{ $.Values.serverName }}"
+        }
+      }
+  annotations:
+    has-no-service-monitor: "true"
+  host: element.{{ $.Values.serverName }}
+  podSecurityContext:
+    runAsGroup: 0
+  replicas: 2
+gateway:
+  className: traefik
+  create: true
+haproxy:
+  podSecurityContext:
+    runAsGroup: 0
+  replicas: 2
+hookshot:
+  additional:
+    permissions.yaml:
+      config: |
+        # Permissions are ordered this way so that we can easily see that they aren't appended to the default
+        # which is identical to the middle item in the array
+        permissions:
+        - actor: "@user1:{{ $.Values.serverName }}"
+          services:
+          - service: "*"
+            level: admin
+        - actor: {{ $.Values.serverName | quote }}
+          services:
+          - service: "*"
+            level: manageConnections
+        - actor: "@user2:{{ $.Values.serverName }}"
+          services:
+          - service: "*"
+            level: admin
+    user-config.yaml:
+      config: |
+        generic:
+          enabled: true
+          outbound: true # For outbound webhook support
+          allowJsTransformationFunctions: false
+          waitForComplete: true
+          enableHttpGet: false
+          allowedIpRanges:
+          - 10.0.0.0/8
+          openIdOverrides:
+            {{ $.Values.serverName | quote }}: "http://{{- $.Release.Name }}-synapse.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}:8008"
+  enabled: true
+  extraEnv:
+    - name: DEBUG_RENDERING
+      value: "1"
+  logging:
+    level: debug
+  podSecurityContext:
+    runAsGroup: 0
+inboundTrafficHandler: gatewayapi
+initSecrets:
+  annotations:
+    has-no-service-monitor: "true"
+  podSecurityContext:
+    runAsGroup: 0
+matrixAuthenticationService:
+  additional:
+    000-pytest-admin:
+      configSecret: "{{ $.Release.Name }}-pytest-admin"
+      configSecretKey: "admin.yaml"
+  extraEnv:
+    - name: DEBUG_RENDERING
+      value: "1"
+  host: mas.{{ $.Values.serverName }}
+  podSecurityContext:
+    runAsGroup: 0
+  replicas: 2
+  syn2mas:
+    extraEnv:
+      - name: DEBUG_RENDERING
+        value: "1"
+matrixRTC:
+  annotations:
+    has-no-service-monitor: "true"
+  extraEnv:
+    - name: LIVEKIT_INSECURE_SKIP_VERIFY_TLS
+      value: "YES_I_KNOW_WHAT_I_AM_DOING"
+  host: mrtc.{{ $.Values.serverName }}
+  podSecurityContext:
+    runAsGroup: 0
+  sfu:
+    exposedServices:
+      rtcMuxedUdp:
+        nodePort: ""
+        portType: NodePort
+      rtcTcp:
+        nodePort: ""
+        portType: NodePort
+      turnTLS:
+        domain: turn.{{ $.Values.serverName }}
+        enabled: true
+        nodePort: ""
+        portType: NodePort
+        tlsSecret: '{{ $.Release.Name }}-turn-tls'
+    extraEnv:
+      - name: DEBUG_RENDERING
+        value: "1"
+    logging:
+      level: debug
+    podSecurityContext:
+      runAsGroup: 0
+postgres:
+  podSecurityContext:
+    runAsGroup: 0
+serverName: ess.localhost
+synapse:
+  additional:
+    00-login-rate-limits.yaml:
+      config: |
+        # Playwright tests log in many users from the same IP. The default
+        # limits are too low for that.
+        rc_login:
+          address:
+            per_second: 10
+            burst_count: 1000
+  checkConfigHook:
+    annotations:
+      has-no-service-monitor: "true"
+  extraArgs:
+    # Validate that any Synapse config that has a <foo>_path equivalent uses it
+    - --no-secrets-in-config
+  extraEnv:
+    - name: DEBUG_RENDERING
+      value: "1"
+  host: synapse.{{ $.Values.serverName }}
+  podSecurityContext:
+    runAsGroup: 0
+valkey:
+  podSecurityContext:
+    runAsGroup: 0

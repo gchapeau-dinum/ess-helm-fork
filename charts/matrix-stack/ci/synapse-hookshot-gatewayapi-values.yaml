@@ -1,0 +1,27 @@
+# Copyright 2025-2026 Element Creations Ltd
+#
+# SPDX-License-Identifier: AGPL-3.0-only
+
+# source_fragments: hookshot-host.yaml inbound-traffic-handler-gatewayapi.yaml init-secrets-minimal.yaml postgres-minimal.yaml server-name.yaml synapse-host.yaml
+# DO NOT EDIT DIRECTLY. Edit the fragment files to add / modify / remove values
+
+# initSecrets, postgres don't have any required properties to be set and defaults to enabled
+deploymentMarkers:
+  enabled: false
+elementAdmin:
+  enabled: false
+elementWeb:
+  enabled: false
+hookshot:
+  enabled: true
+  host: hookshot.ess.localhost
+inboundTrafficHandler: gatewayapi
+matrixAuthenticationService:
+  enabled: false
+matrixRTC:
+  enabled: false
+serverName: ess.localhost
+synapse:
+  host: synapse.ess.localhost
+wellKnownDelegation:
+  enabled: false

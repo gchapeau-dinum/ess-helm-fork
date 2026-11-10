@@ -17,17 +17,17 @@ true
 {{- end -}}
 {{- end -}}
 
+{{- /* component.host, then ingress.host. The explicit context host wins when set. */ -}}
+{{- define "element-io.ess-library.inboundTrafficHandler.rawHost" -}}
+{{- with required "element-io.ess-library.inboundTrafficHandler.rawHost missing context" .context -}}
+{{- $component := required "element-io.ess-library.inboundTrafficHandler.rawHost missing component" .component -}}
+{{- .host | default $component.host | default (dig "ingress" "host" "" $component) -}}
+{{- end -}}
+{{- end -}}
+
 {{- define "element-io.ess-library.inboundTrafficHandler.host" -}}
 {{- $root := .root -}}
-{{- with required "element-io.ess-library.inboundTrafficHandler.host missing context" .context -}}
-{{- $component := required "element-io.ess-library.inboundTrafficHandler.host missing component" .component -}}
-{{- $handler := include "element-io.ess-library.inboundTrafficHandler.name" (dict "root" $root "context" (dict "component" $component)) -}}
-{{- $valuesKey := "ingress" -}}
-{{- if eq $handler "routes" -}}
-{{- $valuesKey = "routes" -}}
-{{- end -}}
-{{- tpl (dig $valuesKey "host" "" $component) $root -}}
-{{- end -}}
+{{- tpl (include "element-io.ess-library.inboundTrafficHandler.rawHost" .) $root -}}
 {{- end -}}
 
 {{- /*
@@ -46,7 +46,7 @@ Returns an error message when an active inbound traffic handler has no host.
 {{- $handler := include "element-io.ess-library.inboundTrafficHandler.name" (dict "root" $root "context" (dict "component" $component)) -}}
 {{- if and $check $handler (not (include "element-io.ess-library.inboundTrafficHandler.host" (dict "root" $root "context" (dict "component" $component)))) -}}
 {{- $when := .when | default (printf "%s.enabled=true" $componentName) -}}
-{{- printf "%s.%s.host is required when %s and inboundTrafficHandler is %s" $componentName $handler $when $handler -}}
+{{- printf "%s.host is required when %s and inboundTrafficHandler is %s" $componentName $when $handler -}}
 {{- end -}}
 {{- end -}}
 {{- end -}}

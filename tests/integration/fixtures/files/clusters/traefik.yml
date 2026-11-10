@@ -9,6 +9,15 @@ metadata:
   namespace: kube-system
 spec:
   valuesContent: |-
+    # Registers a GatewayClass named traefik. The chart would also create its own
+    # Gateway on the web entrypoint; the tests create the Gateway themselves.
+    providers:
+      kubernetesGateway:
+        enabled: true
+    gateway:
+      enabled: false
+    gatewayClass:
+      name: traefik
     service:
       spec:
         # So that we see the real connecting IP

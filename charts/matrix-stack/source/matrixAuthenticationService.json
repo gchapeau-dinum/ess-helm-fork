@@ -120,14 +120,17 @@
     "inboundTrafficHandler": {
       "$ref": "file://common/inboundTrafficHandler.json"
     },
+    "host": {
+      "type": "string"
+    },
     "service": {
       "$ref": "file://common/service.json"
     },
     "ingress": {
       "$ref": "file://common/ingress.json"
     },
-    "routes": {
-      "$ref": "file://common/routes.json"
+    "httpRoutes": {
+      "$ref": "file://common/httpRoutes.json"
     },
     "image": {
       "$ref": "file://common/image.json"

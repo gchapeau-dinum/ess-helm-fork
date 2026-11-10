@@ -1,0 +1,24 @@
+# Copyright 2025-2026 Element Creations Ltd
+#
+# SPDX-License-Identifier: AGPL-3.0-only
+
+# source_fragments: inbound-traffic-handler-gatewayapi.yaml init-secrets-disabled.yaml server-name.yaml well-known-minimal.yaml
+# DO NOT EDIT DIRECTLY. Edit the fragment files to add / modify / remove values
+
+# postgres, wellKnownDelegation don't have any required properties to be set and defaults to enabled
+deploymentMarkers:
+  enabled: false
+elementAdmin:
+  enabled: false
+elementWeb:
+  enabled: false
+inboundTrafficHandler: gatewayapi
+initSecrets:
+  enabled: false
+matrixAuthenticationService:
+  enabled: false
+matrixRTC:
+  enabled: false
+serverName: ess.localhost
+synapse:
+  enabled: false

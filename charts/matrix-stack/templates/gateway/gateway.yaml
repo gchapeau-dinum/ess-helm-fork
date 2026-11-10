@@ -19,7 +19,6 @@ spec:
   gatewayClassName: {{ .className | quote }}
   listeners:
 {{- $listeners | nindent 4 }}
-{{- include "element-io.gateway.redirectRoutes" (dict "root" $) }}
 {{- end -}}
 {{- end -}}
 {{- end -}}

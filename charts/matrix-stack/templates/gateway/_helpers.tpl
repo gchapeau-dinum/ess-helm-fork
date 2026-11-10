@@ -28,11 +28,25 @@ true
 {{- end -}}
 {{- end -}}
 
-{{- define "element-io.gateway.redirectEnabled" -}}
+{{- /*
+HTTPS redirect for one component. The component value overrides the global one.
+Default is on. TLS has to be on, otherwise there is nothing to redirect to.
+*/ -}}
+{{- define "element-io.gateway.httpsRedirect" -}}
 {{- $root := .root -}}
-{{- $gateway := $root.Values.gateway | default dict -}}
-{{- if and (eq (include "element-io.gateway.tlsEnabled" (dict "root" $root)) "true") (not (and (hasKey $gateway "disableHTTPRedirect") $gateway.disableHTTPRedirect)) -}}
+{{- with required "element-io.gateway.httpsRedirect missing context" .context -}}
+{{- $component := required "element-io.gateway.httpsRedirect missing context.component" .component -}}
+{{- $routes := $component.httpRoutes | default dict -}}
+{{- $globalRoutes := $root.Values.httpRoutes | default dict -}}
+{{- $enabled := true -}}
+{{- if hasKey $routes "httpsRedirect" -}}
+{{- $enabled = $routes.httpsRedirect -}}
+{{- else if hasKey $globalRoutes "httpsRedirect" -}}
+{{- $enabled = $globalRoutes.httpsRedirect -}}
+{{- end -}}
+{{- if and $enabled (eq (include "element-io.gateway.tlsEnabled" (dict "root" $root)) "true") -}}
 true
+{{- end -}}
 {{- end -}}
 {{- end -}}
 
@@ -51,17 +65,23 @@ true
 {{- end -}}
 
 {{- /*
-Hostnames that need a Gateway listener: enabled components whose handler is routes
+Hostnames that need a Gateway listener: enabled components whose handler is gatewayapi
 and that have a host. Well-known uses serverName. Components that share a host share
 one listener. Hookshot is included only when it has its own host.
 */ -}}
 {{- define "element-io.gateway.hosts" -}}
 {{- $root := .root -}}
+{{- $redirectOnly := .redirectOnly -}}
 {{- $hosts := dict -}}
 {{- $components := list $root.Values.elementAdmin $root.Values.elementWeb $root.Values.hookshot $root.Values.matrixAuthenticationService $root.Values.matrixRTC $root.Values.synapse -}}
 {{- range $component := $components -}}
 {{- if $component -}}
-{{- if and $component.enabled (eq (include "element-io.ess-library.inboundTrafficHandler.isEnabled" (dict "root" $root "context" (dict "component" $component "trafficHandler" "routes"))) "true") -}}
+{{- if and $component.enabled (eq (include "element-io.ess-library.inboundTrafficHandler.isEnabled" (dict "root" $root "context" (dict "component" $component "trafficHandler" "gatewayapi"))) "true") -}}
+{{- $wantsRedirect := true -}}
+{{- if $redirectOnly -}}
+{{- $wantsRedirect = eq (include "element-io.gateway.httpsRedirect" (dict "root" $root "context" (dict "component" $component))) "true" -}}
+{{- end -}}
+{{- if $wantsRedirect -}}
 {{- $host := include "element-io.ess-library.inboundTrafficHandler.host" (dict "root" $root "context" (dict "component" $component)) | trim -}}
 {{- if $host -}}
 {{- $_ := set $hosts $host true -}}
@@ -69,11 +89,18 @@ one listener. Hookshot is included only when it has its own host.
 {{- end -}}
 {{- end -}}
 {{- end -}}
+{{- end -}}
 {{- with $root.Values.wellKnownDelegation -}}
-{{- if and .enabled (eq (include "element-io.ess-library.inboundTrafficHandler.isEnabled" (dict "root" $root "context" (dict "component" . "trafficHandler" "routes"))) "true") -}}
+{{- if and .enabled (eq (include "element-io.ess-library.inboundTrafficHandler.isEnabled" (dict "root" $root "context" (dict "component" . "trafficHandler" "gatewayapi"))) "true") -}}
+{{- $wantsRedirect := true -}}
+{{- if $redirectOnly -}}
+{{- $wantsRedirect = eq (include "element-io.gateway.httpsRedirect" (dict "root" $root "context" (dict "component" .))) "true" -}}
+{{- end -}}
+{{- if $wantsRedirect -}}
 {{- $host := tpl ($root.Values.serverName | default "") $root | trim -}}
 {{- if $host -}}
 {{- $_ := set $hosts $host true -}}
+{{- end -}}
 {{- end -}}
 {{- end -}}
 {{- end -}}
@@ -90,9 +117,15 @@ one listener. Hookshot is included only when it has its own host.
 {{- $hosts = $rawHosts | fromYamlArray -}}
 {{- end -}}
 {{- $tlsEnabled := eq (include "element-io.gateway.tlsEnabled" (dict "root" $root)) "true" -}}
-{{- $redirectEnabled := eq (include "element-io.gateway.redirectEnabled" (dict "root" $root)) "true" -}}
-{{- range $host := $hosts -}}
-{{- if or (not $tlsEnabled) $redirectEnabled -}}
+{{- $httpHosts := $hosts -}}
+{{- if $tlsEnabled -}}
+{{- $rawRedirectHosts := include "element-io.gateway.hosts" (dict "root" $root "redirectOnly" true) -}}
+{{- $httpHosts = list -}}
+{{- if $rawRedirectHosts -}}
+{{- $httpHosts = $rawRedirectHosts | fromYamlArray -}}
+{{- end -}}
+{{- end -}}
+{{- range $host := $httpHosts -}}
 - name: {{ include "element-io.gateway.listenerName" (dict "root" $root "context" (dict "host" $host "protocol" "http")) | quote }}
   hostname: {{ $host | quote }}
   port: 80
@@ -100,8 +133,9 @@ one listener. Hookshot is included only when it has its own host.
   allowedRoutes:
     namespaces:
       from: Same
-{{ end -}}
-{{- if $tlsEnabled -}}
+{{ end }}
+{{- if $tlsEnabled }}
+{{- range $host := $hosts }}
 - name: {{ include "element-io.gateway.listenerName" (dict "root" $root "context" (dict "host" $host "protocol" "https")) | quote }}
   hostname: {{ $host | quote }}
   port: 443
@@ -115,8 +149,8 @@ one listener. Hookshot is included only when it has its own host.
   allowedRoutes:
     namespaces:
       from: Same
-{{ end -}}
-{{- end -}}
+{{ end }}
+{{- end }}
 {{- end -}}
 
 {{- define "element-io.gateway.annotations" -}}
@@ -154,35 +188,3 @@ app.kubernetes.io/version: {{ include "element-io.ess-library.labels.makeSafe" $
 {{- end -}}
 {{- end -}}
 
-{{- define "element-io.gateway.redirectRoutes" -}}
-{{- $root := .root -}}
-{{- if eq (include "element-io.gateway.redirectEnabled" (dict "root" $root)) "true" -}}
-{{- $rawHosts := include "element-io.gateway.hosts" (dict "root" $root) -}}
-{{- $hosts := list -}}
-{{- if $rawHosts -}}
-{{- $hosts = $rawHosts | fromYamlArray -}}
-{{- end -}}
-{{- range $host := $hosts }}
----
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-metadata:
-  labels:
-    {{- include "element-io.gateway.labels" (dict "root" $root "context" ($root.Values.gateway | default dict)) | trim | nindent 4 }}
-  name: {{ printf "%s-redirect-%s" $root.Release.Name (sha256sum $host | trunc 10) }}
-  namespace: {{ $root.Release.Namespace }}
-spec:
-  parentRefs:
-  - name: {{ include "element-io.gateway.name" (dict "root" $root) | quote }}
-    sectionName: {{ include "element-io.gateway.listenerName" (dict "root" $root "context" (dict "host" $host "protocol" "http")) | quote }}
-  hostnames:
-  - {{ $host | quote }}
-  rules:
-  - filters:
-    - type: RequestRedirect
-      requestRedirect:
-        scheme: https
-        statusCode: 301
-{{- end }}
-{{- end -}}
-{{- end -}}

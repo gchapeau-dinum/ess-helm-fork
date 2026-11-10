@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 */ -}}
 
 {{- with $.Values.wellKnownDelegation -}}
-{{- include "element-io.ess-library.httproute.manifest" (dict "root" $ "context" (dict
+{{- include "element-io.ess-library.http-route.manifest" (dict "root" $ "context" (dict
   "component" .
   "componentName" "well-known-delegation"
   "routeName" "well-known"

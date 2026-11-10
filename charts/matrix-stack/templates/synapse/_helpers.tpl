@@ -158,7 +158,13 @@ env:
       name: webhooks
       number: 7775
 {{- end -}}
-{{- range $root.Values.synapse.ingress.additionalPaths }}
+{{- /* User paths follow the active handler. httpRoutes.additionalPaths when it is gatewayapi, otherwise ingress.additionalPaths. */ -}}
+{{- $handler := include "element-io.ess-library.inboundTrafficHandler.name" (dict "root" $root "context" (dict "component" $root.Values.synapse)) -}}
+{{- $additionalPaths := dig "ingress" "additionalPaths" (list) $root.Values.synapse -}}
+{{- if eq $handler "gatewayapi" -}}
+{{- $additionalPaths = dig "httpRoutes" "additionalPaths" (list) $root.Values.synapse -}}
+{{- end -}}
+{{- range $additionalPaths }}
 - {{ . | toYaml | indent 2 | trim }}
 {{- end -}}
 {{- end -}}

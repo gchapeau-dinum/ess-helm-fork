@@ -101,8 +101,8 @@
     "ingress": {
       "$ref": "file://common/ingress_global.json"
     },
-    "routes": {
-      "$ref": "file://common/routes_global.json"
+    "httpRoutes": {
+      "$ref": "file://common/httpRoutes_global.json"
     },
     "storage": {
       "$ref": "file://common/storage_global.json"
@@ -180,9 +180,6 @@
         },
         "tlsSecret": {
           "type": "string"
-        },
-        "disableHTTPRedirect": {
-          "type": "boolean"
         }
       }
     },

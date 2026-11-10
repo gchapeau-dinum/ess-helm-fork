@@ -19,7 +19,12 @@ app.kubernetes.io/version: {{ include "element-io.ess-library.labels.makeSafe" .
 
 {{- define "element-io.matrix-rtc-sfu.url" -}}
 {{- $root := .root -}}
-{{ tpl ($root.Values.matrixRTC.sfu.enabled | ternary (printf "wss://%s" $root.Values.matrixRTC.ingress.host) ($root.Values.matrixRTC.sfu.url)) $root | quote }}
+{{- $rtcHost := include "element-io.ess-library.inboundTrafficHandler.host" (dict "root" $root "context" (dict "component" $root.Values.matrixRTC)) -}}
+{{- if $root.Values.matrixRTC.sfu.enabled -}}
+{{ printf "wss://%s" $rtcHost | quote }}
+{{- else -}}
+{{ tpl $root.Values.matrixRTC.sfu.url $root | quote }}
+{{- end -}}
 {{- end }}
 
 {{- define "element-io.matrix-rtc-sfu.overrideEnv" }}

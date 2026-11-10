@@ -4,12 +4,12 @@ Copyright 2026 Element Creations Ltd
 SPDX-License-Identifier: AGPL-3.0-only
 */ -}}
 
-{{- define "element-io.ess-library.httproute.annotations" -}}
+{{- define "element-io.ess-library.http-route.annotations" -}}
 {{- $root := .root -}}
-{{- with required "element-io.ess-library.httproute.annotations missing context" .context -}}
-{{- $routes := required "element-io.ess-library.httproute.annotations context missing routes" .routes -}}
+{{- with required "element-io.ess-library.http-route.annotations missing context" .context -}}
+{{- $routes := required "element-io.ess-library.http-route.annotations context missing httpRoutes" .httpRoutes -}}
 {{- $annotations := .extraAnnotations | default dict -}}
-{{- $globalRoutes := $root.Values.routes | default dict -}}
+{{- $globalRoutes := $root.Values.httpRoutes | default dict -}}
 {{- $annotations = mustMergeOverwrite $annotations (($globalRoutes.annotations | default dict) | deepCopy) -}}
 {{- $annotations = mustMergeOverwrite $annotations (($routes.annotations | default dict) | deepCopy) -}}
 {{- $cleaned := dict -}}
@@ -26,17 +26,17 @@ annotations:
 {{- end -}}
 
 {{- /*
-parentRefs come from the component routes, then the global routes.
+parentRefs come from the component httpRoutes, then the global httpRoutes.
 When neither is set, gateway.create is true, and this route has a host, attach to the
 generated Gateway listener for that host. sectionName matches element-io.gateway.listenerName.
 */ -}}
-{{- define "element-io.ess-library.httproute.parentRefs" -}}
+{{- define "element-io.ess-library.http-route.parentRefs" -}}
 {{- $root := .root -}}
-{{- with required "element-io.ess-library.httproute.parentRefs missing context" .context -}}
-{{- $routes := required "element-io.ess-library.httproute.parentRefs context missing routes" .routes -}}
+{{- with required "element-io.ess-library.http-route.parentRefs missing context" .context -}}
+{{- $routes := required "element-io.ess-library.http-route.parentRefs context missing httpRoutes" .httpRoutes -}}
 {{- $host := .host | default "" -}}
-{{- $globalRoutes := $root.Values.routes | default dict -}}
-{{- $parentRefs := $routes.existingGateways | default $globalRoutes.existingGateways -}}
+{{- $globalRoutes := $root.Values.httpRoutes | default dict -}}
+{{- $parentRefs := $routes.parentReferences | default $globalRoutes.parentReferences -}}
 {{- if not $parentRefs -}}
 {{- $gateway := $root.Values.gateway | default dict -}}
 {{- if and $gateway.create $host -}}
@@ -72,20 +72,20 @@ parentRefs:
 {{- end -}}
 {{- end -}}
 
-{{- define "element-io.ess-library.httproute.manifest" -}}
+{{- define "element-io.ess-library.http-route.manifest" -}}
 {{- $root := .root -}}
-{{- with required "element-io.ess-library.httproute.manifest missing context" .context -}}
-{{- $component := required "element-io.ess-library.httproute.manifest missing component" .component -}}
-{{- $componentName := required "element-io.ess-library.httproute.manifest missing componentName" .componentName -}}
-{{- $routeName := required "element-io.ess-library.httproute.manifest missing routeName" .routeName -}}
-{{- $labels := required "element-io.ess-library.httproute.manifest missing labels" .labels -}}
-{{- $rawHost := .host | default (dig "routes" "host" "" $component) -}}
+{{- with required "element-io.ess-library.http-route.manifest missing context" .context -}}
+{{- $component := required "element-io.ess-library.http-route.manifest missing component" .component -}}
+{{- $componentName := required "element-io.ess-library.http-route.manifest missing componentName" .componentName -}}
+{{- $routeName := required "element-io.ess-library.http-route.manifest missing routeName" .routeName -}}
+{{- $labels := required "element-io.ess-library.http-route.manifest missing labels" .labels -}}
+{{- $rawHost := include "element-io.ess-library.inboundTrafficHandler.rawHost" (dict "root" $root "context" (dict "component" $component "host" .host)) -}}
 {{- $renderedHost := "" -}}
 {{- if $rawHost -}}
 {{- $renderedHost = tpl $rawHost $root | trim -}}
 {{- end -}}
 {{- $extraAnnotations := .extraAnnotations | default dict -}}
-{{- $render := and $component.enabled (eq (include "element-io.ess-library.inboundTrafficHandler.isEnabled" (dict "root" $root "context" (dict "component" $component "trafficHandler" "routes"))) "true") -}}
+{{- $render := and $component.enabled (eq (include "element-io.ess-library.inboundTrafficHandler.isEnabled" (dict "root" $root "context" (dict "component" $component "trafficHandler" "gatewayapi"))) "true") -}}
 {{- if .requireHost -}}
 {{- $render = and $render $renderedHost -}}
 {{- end -}}
@@ -94,13 +94,13 @@ parentRefs:
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-{{- include "element-io.ess-library.httproute.annotations" (dict "root" $root "context" (dict "routes" ($component.routes | default dict) "extraAnnotations" $extraAnnotations)) | nindent 2 }}
+{{- include "element-io.ess-library.http-route.annotations" (dict "root" $root "context" (dict "httpRoutes" ($component.httpRoutes | default dict) "extraAnnotations" $extraAnnotations)) | nindent 2 }}
   labels:
     {{- $labels | nindent 4 }}
   name: {{ $root.Release.Name }}-{{ $routeName }}
   namespace: {{ $root.Release.Namespace }}
 spec:
-{{- include "element-io.ess-library.httproute.parentRefs" (dict "root" $root "context" (dict "routes" ($component.routes | default dict) "host" $renderedHost)) | nindent 2 }}
+{{- include "element-io.ess-library.http-route.parentRefs" (dict "root" $root "context" (dict "httpRoutes" ($component.httpRoutes | default dict) "host" $renderedHost)) | nindent 2 }}
 {{- if $renderedHost }}
   hostnames:
   - {{ $renderedHost | quote }}
@@ -114,6 +114,34 @@ spec:
     backendRefs:
     - name: {{ .serviceName | quote }}
       port: {{ required (printf "HTTPRoute path %s on %s requires servicePortNumber" .path $componentName) .servicePortNumber }}
+{{- end }}
+{{- if and $renderedHost (eq (include "element-io.gateway.httpsRedirect" (dict "root" $root "context" (dict "component" $component))) "true") (($root.Values.gateway | default dict).create) }}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  labels:
+    {{- $labels | nindent 4 }}
+  name: {{ $root.Release.Name }}-{{ $routeName }}-redirect
+  namespace: {{ $root.Release.Namespace }}
+spec:
+  parentRefs:
+  - name: {{ include "element-io.gateway.name" (dict "root" $root) | quote }}
+    sectionName: {{ include "element-io.gateway.listenerName" (dict "root" $root "context" (dict "host" $renderedHost "protocol" "http")) | quote }}
+  hostnames:
+  - {{ $renderedHost | quote }}
+  rules:
+{{- range $paths }}
+  - matches:
+    - path:
+        type: PathPrefix
+        value: {{ .path | quote }}
+    filters:
+    - type: RequestRedirect
+      requestRedirect:
+        scheme: https
+        statusCode: 301
+{{- end }}
 {{- end }}
 
 {{- end -}}

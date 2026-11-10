@@ -1,0 +1,21 @@
+# Copyright 2026 Element Creations Ltd
+#
+# SPDX-License-Identifier: AGPL-3.0-only
+
+synapse:
+  httpRoutes:
+    additionalPaths:
+    - path: /_matrix/from-routes
+      availability: only_externally
+      service:
+        name: routes-svc
+        port:
+          number: 8080
+    - path: /_matrix/routes-blocked
+      availability: blocked
+    - path: /_matrix/internal
+      availability: internally_and_externally
+      service:
+        name: internal-svc
+        port:
+          number: 8080
