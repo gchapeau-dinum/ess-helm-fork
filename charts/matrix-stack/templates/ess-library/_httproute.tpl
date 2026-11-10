@@ -30,10 +30,10 @@ parentRefs come from the component httpRoutes, then the global httpRoutes.
 When neither is set, gateway.create is true, and this route has a host, attach to the
 generated Gateway listener for that host. sectionName matches element-io.gateway.listenerName.
 */ -}}
-{{- define "element-io.ess-library.http-route.parentRefs" -}}
+{{- define "element-io.ess-library.http-route.resolvedParentRefs" -}}
 {{- $root := .root -}}
-{{- with required "element-io.ess-library.http-route.parentRefs missing context" .context -}}
-{{- $routes := required "element-io.ess-library.http-route.parentRefs context missing httpRoutes" .httpRoutes -}}
+{{- with required "element-io.ess-library.http-route.resolvedParentRefs missing context" .context -}}
+{{- $routes := required "element-io.ess-library.http-route.resolvedParentRefs context missing httpRoutes" .httpRoutes -}}
 {{- $host := .host | default "" -}}
 {{- $globalRoutes := $root.Values.httpRoutes | default dict -}}
 {{- $parentRefs := $routes.parentReferences | default $globalRoutes.parentReferences -}}
@@ -49,8 +49,17 @@ generated Gateway listener for that host. sectionName matches element-io.gateway
 {{- end -}}
 {{- end -}}
 {{- if $parentRefs -}}
+{{- $parentRefs | toYaml -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "element-io.ess-library.http-route.parentRefs" -}}
+{{- $root := .root -}}
+{{- $rawParentRefs := include "element-io.ess-library.http-route.resolvedParentRefs" (dict "root" $root "context" .context) -}}
+{{- if $rawParentRefs -}}
 parentRefs:
-{{- range $parentRefs }}
+{{- range $rawParentRefs | fromYamlArray }}
 - name: {{ required "HTTPRoute parentRef missing name" .name | quote }}
 {{- with .namespace }}
   namespace: {{ . | quote }}
@@ -68,7 +77,90 @@ parentRefs:
   port: {{ . }}
 {{- end }}
 {{- end }}
-{{- end }}
+{{- end -}}
+{{- end -}}
+
+{{- /*
+User policy settings for one httpRoutes key. The component object is merged over the global one.
+null on the component skips the policy. targetRefs are not part of the user settings.
+*/ -}}
+{{- define "element-io.ess-library.http-route.policySettings" -}}
+{{- $root := .root -}}
+{{- with required "element-io.ess-library.http-route.policySettings missing context" .context -}}
+{{- $component := required "element-io.ess-library.http-route.policySettings missing component" .component -}}
+{{- $key := required "element-io.ess-library.http-route.policySettings missing key" .key -}}
+{{- $routes := $component.httpRoutes | default dict -}}
+{{- $globalRoutes := $root.Values.httpRoutes | default dict -}}
+{{- $disabled := and (hasKey $routes $key) (kindIs "invalid" (index $routes $key)) -}}
+{{- if not $disabled -}}
+{{- $merged := dict -}}
+{{- if and (hasKey $globalRoutes $key) (not (kindIs "invalid" (index $globalRoutes $key))) -}}
+{{- $merged = index $globalRoutes $key | deepCopy -}}
+{{- end -}}
+{{- if and (hasKey $routes $key) (not (kindIs "invalid" (index $routes $key))) -}}
+{{- $merged = mustMergeOverwrite $merged (index $routes $key | deepCopy) -}}
+{{- end -}}
+{{- $settings := dict -}}
+{{- range $setting, $value := $merged -}}
+{{- if and (not (has $setting (list "targetRef" "targetRefs" "targetSelectors"))) (not (kindIs "invalid" $value)) -}}
+{{- $_ := set $settings $setting $value -}}
+{{- end -}}
+{{- end -}}
+{{- if $settings -}}
+{{- $settings | toYaml -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "element-io.ess-library.http-route.trafficPolicies" -}}
+{{- $root := .root -}}
+{{- with required "element-io.ess-library.http-route.trafficPolicies missing context" .context -}}
+{{- $component := required "element-io.ess-library.http-route.trafficPolicies missing component" .component -}}
+{{- $routeName := required "element-io.ess-library.http-route.trafficPolicies missing routeName" .routeName -}}
+{{- $labels := required "element-io.ess-library.http-route.trafficPolicies missing labels" .labels -}}
+{{- $host := .host | default "" -}}
+{{- $clientSettings := include "element-io.ess-library.http-route.policySettings" (dict "root" $root "context" (dict "component" $component "key" "clientTrafficPolicy")) -}}
+{{- if $clientSettings -}}
+{{- $rawParentRefs := include "element-io.ess-library.http-route.resolvedParentRefs" (dict "root" $root "context" (dict "httpRoutes" ($component.httpRoutes | default dict) "host" $host)) -}}
+{{- if $rawParentRefs -}}
+{{- $targetRefs := list -}}
+{{- range $rawParentRefs | fromYamlArray -}}
+{{- $target := dict "group" (.group | default "gateway.networking.k8s.io") "kind" (.kind | default "Gateway") "name" (required "HTTPRoute parentRef missing name" .name) -}}
+{{- with .sectionName -}}
+{{- $_ := set $target "sectionName" . -}}
+{{- end -}}
+{{- $targetRefs = append $targetRefs $target -}}
+{{- end -}}
+{{- $spec := $clientSettings | fromYaml -}}
+{{- $_ := set $spec "targetRefs" $targetRefs -}}
+{{ print "\n---\n" }}
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: ClientTrafficPolicy
+metadata:
+  labels:
+    {{- $labels | nindent 4 }}
+  name: {{ $root.Release.Name }}-{{ $routeName }}-client-traffic
+  namespace: {{ $root.Release.Namespace }}
+spec:
+  {{- toYaml $spec | nindent 2 }}
+{{- end -}}
+{{- end -}}
+{{- $backendSettings := include "element-io.ess-library.http-route.policySettings" (dict "root" $root "context" (dict "component" $component "key" "backendTrafficPolicy")) -}}
+{{- if $backendSettings -}}
+{{- $spec := $backendSettings | fromYaml -}}
+{{- $_ := set $spec "targetRefs" (list (dict "group" "gateway.networking.k8s.io" "kind" "HTTPRoute" "name" (printf "%s-%s" $root.Release.Name $routeName))) -}}
+{{ print "\n---\n" }}
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: BackendTrafficPolicy
+metadata:
+  labels:
+    {{- $labels | nindent 4 }}
+  name: {{ $root.Release.Name }}-{{ $routeName }}-backend-traffic
+  namespace: {{ $root.Release.Namespace }}
+spec:
+  {{- toYaml $spec | nindent 2 }}
+{{- end -}}
 {{- end -}}
 {{- end -}}
 
@@ -143,7 +235,7 @@ spec:
         statusCode: 301
 {{- end }}
 {{- end }}
-
+{{- include "element-io.ess-library.http-route.trafficPolicies" (dict "root" $root "context" (dict "component" $component "routeName" $routeName "labels" $labels "host" $renderedHost)) }}
 {{- end -}}
 {{- end -}}
 {{- end -}}

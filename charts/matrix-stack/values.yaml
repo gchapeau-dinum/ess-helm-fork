@@ -135,6 +135,21 @@ httpRoutes:
   ## Requires gateway.tlsEnabled. A component value overrides the global one.
   httpsRedirect: true
 
+  ## Envoy Gateway ClientTrafficPolicy settings.
+  ## The chart attaches the policy to the same Gateway listeners as the HTTPRoute.
+  ## A component value is merged over the global one. null on a component skips it.
+  # clientTrafficPolicy:
+  #   timeout:
+  #     http:
+  #       requestTimeout: 60s
+
+  ## Envoy Gateway BackendTrafficPolicy settings.
+  ## The chart attaches the policy to this component's HTTPRoute.
+  ## A component value is merged over the global one. null on a component skips it.
+  # backendTrafficPolicy:
+  #   retry:
+  #     numRetries: 3
+
 ## Common image properties that are applied as defaults to all components.
 image:
   ## The pullPolicy to use for all images. This overrides the pullPolicy used by the templates
@@ -813,6 +828,21 @@ matrixRTC:
     ## Redirect this route's HTTP requests to HTTPS on the generated Gateway.
     ## Requires gateway.tlsEnabled. A component value overrides the global one.
     # httpsRedirect: true
+
+    ## Envoy Gateway ClientTrafficPolicy settings.
+    ## The chart attaches the policy to the same Gateway listeners as the HTTPRoute.
+    ## A component value is merged over the global one. null on a component skips it.
+    # clientTrafficPolicy:
+    #   timeout:
+    #     http:
+    #       requestTimeout: 60s
+
+    ## Envoy Gateway BackendTrafficPolicy settings.
+    ## The chart attaches the policy to this component's HTTPRoute.
+    ## A component value is merged over the global one. null on a component skips it.
+    # backendTrafficPolicy:
+    #   retry:
+    #     numRetries: 3
   # Details of the image to be used
   image:
     ## The host and (optional) port of the container image registry for this component.
@@ -1688,6 +1718,21 @@ elementAdmin:
     ## Redirect this route's HTTP requests to HTTPS on the generated Gateway.
     ## Requires gateway.tlsEnabled. A component value overrides the global one.
     # httpsRedirect: true
+
+    ## Envoy Gateway ClientTrafficPolicy settings.
+    ## The chart attaches the policy to the same Gateway listeners as the HTTPRoute.
+    ## A component value is merged over the global one. null on a component skips it.
+    # clientTrafficPolicy:
+    #   timeout:
+    #     http:
+    #       requestTimeout: 60s
+
+    ## Envoy Gateway BackendTrafficPolicy settings.
+    ## The chart attaches the policy to this component's HTTPRoute.
+    ## A component value is merged over the global one. null on a component skips it.
+    # backendTrafficPolicy:
+    #   retry:
+    #     numRetries: 3
   ## Labels to add to all manifest for this component
   labels: {}
   ## Defines the annotations to add to the workload
@@ -2027,6 +2072,21 @@ elementWeb:
     ## Redirect this route's HTTP requests to HTTPS on the generated Gateway.
     ## Requires gateway.tlsEnabled. A component value overrides the global one.
     # httpsRedirect: true
+
+    ## Envoy Gateway ClientTrafficPolicy settings.
+    ## The chart attaches the policy to the same Gateway listeners as the HTTPRoute.
+    ## A component value is merged over the global one. null on a component skips it.
+    # clientTrafficPolicy:
+    #   timeout:
+    #     http:
+    #       requestTimeout: 60s
+
+    ## Envoy Gateway BackendTrafficPolicy settings.
+    ## The chart attaches the policy to this component's HTTPRoute.
+    ## A component value is merged over the global one. null on a component skips it.
+    # backendTrafficPolicy:
+    #   retry:
+    #     numRetries: 3
   ## Labels to add to all manifest for this component
   labels: {}
   ## Defines the annotations to add to the workload
@@ -2708,6 +2768,21 @@ hookshot:
     ## Requires gateway.tlsEnabled. A component value overrides the global one.
     # httpsRedirect: true
 
+    ## Envoy Gateway ClientTrafficPolicy settings.
+    ## The chart attaches the policy to the same Gateway listeners as the HTTPRoute.
+    ## A component value is merged over the global one. null on a component skips it.
+    # clientTrafficPolicy:
+    #   timeout:
+    #     http:
+    #       requestTimeout: 60s
+
+    ## Envoy Gateway BackendTrafficPolicy settings.
+    ## The chart attaches the policy to this component's HTTPRoute.
+    ## A component value is merged over the global one. null on a component skips it.
+    # backendTrafficPolicy:
+    #   retry:
+    #     numRetries: 3
+
   ## Additional configuration to provide to Hookshot.
   ## You can, if you whish, override it in the additional config.
   ## Each key under additional is an additional config to merge into Hookshot hookshot-config.yaml
@@ -3255,6 +3330,21 @@ matrixAuthenticationService:
     ## Redirect this route's HTTP requests to HTTPS on the generated Gateway.
     ## Requires gateway.tlsEnabled. A component value overrides the global one.
     # httpsRedirect: true
+
+    ## Envoy Gateway ClientTrafficPolicy settings.
+    ## The chart attaches the policy to the same Gateway listeners as the HTTPRoute.
+    ## A component value is merged over the global one. null on a component skips it.
+    # clientTrafficPolicy:
+    #   timeout:
+    #     http:
+    #       requestTimeout: 60s
+
+    ## Envoy Gateway BackendTrafficPolicy settings.
+    ## The chart attaches the policy to this component's HTTPRoute.
+    ## A component value is merged over the global one. null on a component skips it.
+    # backendTrafficPolicy:
+    #   retry:
+    #     numRetries: 3
 
   ## Kubernetes resources to allocate to each instance.
   resources:
@@ -6304,6 +6394,21 @@ synapse:
     ## Redirect this route's HTTP requests to HTTPS on the generated Gateway.
     ## Requires gateway.tlsEnabled. A component value overrides the global one.
     # httpsRedirect: true
+
+    ## Envoy Gateway ClientTrafficPolicy settings.
+    ## The chart attaches the policy to the same Gateway listeners as the HTTPRoute.
+    ## A component value is merged over the global one. null on a component skips it.
+    # clientTrafficPolicy:
+    #   timeout:
+    #     http:
+    #       requestTimeout: 60s
+
+    ## Envoy Gateway BackendTrafficPolicy settings.
+    ## The chart attaches the policy to this component's HTTPRoute.
+    ## A component value is merged over the global one. null on a component skips it.
+    # backendTrafficPolicy:
+    #   retry:
+    #     numRetries: 3
   ## Labels to add to all manifest for this component
   labels: {}
   ## Defines the annotations to add to the workload
@@ -6631,6 +6736,21 @@ wellKnownDelegation:
     ## Redirect this route's HTTP requests to HTTPS on the generated Gateway.
     ## Requires gateway.tlsEnabled. A component value overrides the global one.
     # httpsRedirect: true
+
+    ## Envoy Gateway ClientTrafficPolicy settings.
+    ## The chart attaches the policy to the same Gateway listeners as the HTTPRoute.
+    ## A component value is merged over the global one. null on a component skips it.
+    # clientTrafficPolicy:
+    #   timeout:
+    #     http:
+    #       requestTimeout: 60s
+
+    ## Envoy Gateway BackendTrafficPolicy settings.
+    ## The chart attaches the policy to this component's HTTPRoute.
+    ## A component value is merged over the global one. null on a component skips it.
+    # backendTrafficPolicy:
+    #   retry:
+    #     numRetries: 3
 
   ## If ElementWeb is deployed, the base domain will redirect to it's ingress host by default
   ## If ElementWeb is not deployed or this is disabled, no base domain URL redirect will be set.

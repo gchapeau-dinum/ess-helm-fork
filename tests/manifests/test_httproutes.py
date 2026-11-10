@@ -36,6 +36,10 @@ def component_is_redirect(template) -> bool:
     return bool(rules and any(item.get("type") == "RequestRedirect" for item in rules[0].get("filters") or []))
 
 
+def traffic_policies(templates, kind: str):
+    return [template for template in templates if template["kind"] == kind]
+
+
 def component_httproutes(templates):
     for template in templates:
         if template["kind"] != "HTTPRoute" or component_is_redirect(template):
@@ -254,3 +258,81 @@ async def test_component_handler_none_beats_global_routes(values, make_templates
 
     iterate_deployables_ingress_parts(set_handler_none)
     assert list(component_httproutes(await make_templates(values))) == []
+
+
+@pytest.mark.parametrize("values_file", gatewayapi_values_files_to_test)
+@pytest.mark.asyncio_cooperative
+async def test_no_traffic_policies_by_default(templates):
+    assert traffic_policies(templates, "ClientTrafficPolicy") == []
+    assert traffic_policies(templates, "BackendTrafficPolicy") == []
+
+
+@pytest.mark.parametrize("values_file", gatewayapi_values_files_to_test)
+@pytest.mark.asyncio_cooperative
+async def test_global_traffic_policies_follow_httproutes(values, make_templates, release_name):
+    values.setdefault("gateway", {})["create"] = True
+    values["gateway"]["className"] = "test"
+    values.setdefault("httpRoutes", {})["clientTrafficPolicy"] = {"timeout": {"http": {"requestTimeout": "10s"}}}
+    values["httpRoutes"]["backendTrafficPolicy"] = {"retry": {"numRetries": 2}}
+
+    rendered = await make_templates(values)
+    routes = list(component_httproutes(rendered))
+    client_policies = traffic_policies(rendered, "ClientTrafficPolicy")
+    backend_policies = traffic_policies(rendered, "BackendTrafficPolicy")
+    assert len(client_policies) == len(routes)
+    assert len(backend_policies) == len(routes)
+    for route in routes:
+        client_policy = next(
+            policy for policy in client_policies if policy["metadata"]["name"] == f"{route['metadata']['name']}-client-traffic"
+        )
+        backend_policy = next(
+            policy
+            for policy in backend_policies
+            if policy["metadata"]["name"] == f"{route['metadata']['name']}-backend-traffic"
+        )
+        assert client_policy["spec"]["timeout"]["http"]["requestTimeout"] == "10s"
+        assert client_policy["spec"]["targetRefs"] == [
+            {
+                "group": "gateway.networking.k8s.io",
+                "kind": "Gateway",
+                "name": parent_ref["name"],
+                **({"sectionName": parent_ref["sectionName"]} if "sectionName" in parent_ref else {}),
+            }
+            for parent_ref in route["spec"]["parentRefs"]
+        ]
+        assert backend_policy["spec"]["retry"]["numRetries"] == 2
+        assert backend_policy["spec"]["targetRefs"] == [
+            {
+                "group": "gateway.networking.k8s.io",
+                "kind": "HTTPRoute",
+                "name": route["metadata"]["name"],
+            }
+        ]
+        assert route["metadata"]["name"].startswith(f"{release_name}-")
+
+
+@pytest.mark.parametrize("values_file", gatewayapi_values_files_to_test)
+@pytest.mark.asyncio_cooperative
+async def test_component_traffic_policy_overrides_global(values, make_templates):
+    values.setdefault("gateway", {})["create"] = True
+    values["gateway"]["className"] = "test"
+    values.setdefault("httpRoutes", {})["clientTrafficPolicy"] = {"timeout": {"http": {"requestTimeout": "10s"}}}
+    values["httpRoutes"]["backendTrafficPolicy"] = {"retry": {"numRetries": 2}}
+
+    def override_policies(deployable_details: DeployableDetails):
+        deployable_details.set_helm_values(
+            values,
+            PropertyType.HttpRoutes,
+            {
+                "clientTrafficPolicy": {"timeout": {"http": {"requestTimeout": "30s"}}},
+                "backendTrafficPolicy": None,
+            },
+        )
+
+    iterate_deployables_ingress_parts(override_policies)
+    rendered = await make_templates(values)
+    client_policies = traffic_policies(rendered, "ClientTrafficPolicy")
+    assert client_policies
+    assert traffic_policies(rendered, "BackendTrafficPolicy") == []
+    for policy in client_policies:
+        assert policy["spec"]["timeout"]["http"]["requestTimeout"] == "30s"

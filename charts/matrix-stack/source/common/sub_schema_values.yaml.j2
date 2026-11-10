@@ -313,6 +313,21 @@ extraObjects: {}
 {%- else %}
   # httpsRedirect: true
 {%- endif %}
+
+  ## Envoy Gateway ClientTrafficPolicy settings.
+  ## The chart attaches the policy to the same Gateway listeners as the HTTPRoute.
+  ## A component value is merged over the global one. null on a component skips it.
+  # clientTrafficPolicy:
+  #   timeout:
+  #     http:
+  #       requestTimeout: 60s
+
+  ## Envoy Gateway BackendTrafficPolicy settings.
+  ## The chart attaches the policy to this component's HTTPRoute.
+  ## A component value is merged over the global one. null on a component skips it.
+  # backendTrafficPolicy:
+  #   retry:
+  #     numRetries: 3
 {%- endmacro %}
 
 {% macro labels(global=false, key='labels') %}

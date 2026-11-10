@@ -465,6 +465,14 @@
         },
         "httpsRedirect": {
           "type": "boolean"
+        },
+        "clientTrafficPolicy": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "backendTrafficPolicy": {
+          "type": "object",
+          "additionalProperties": true
         }
       },
       "additionalProperties": false
@@ -1739,6 +1747,14 @@
         },
         "httpsRedirect": {
           "type": "boolean"
+        },
+        "clientTrafficPolicy": {
+          "type": ["object", "null"],
+          "additionalProperties": true
+        },
+        "backendTrafficPolicy": {
+          "type": ["object", "null"],
+          "additionalProperties": true
         }
       },
       "additionalProperties": false
@@ -3896,6 +3912,14 @@
         },
         "httpsRedirect": {
           "type": "boolean"
+        },
+        "clientTrafficPolicy": {
+          "type": ["object", "null"],
+          "additionalProperties": true
+        },
+        "backendTrafficPolicy": {
+          "type": ["object", "null"],
+          "additionalProperties": true
         },
         "additionalPaths": {
           "type": "array",

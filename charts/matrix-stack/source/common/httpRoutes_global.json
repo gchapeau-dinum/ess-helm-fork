@@ -16,6 +16,14 @@
     },
     "httpsRedirect": {
       "type": "boolean"
+    },
+    "clientTrafficPolicy": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "backendTrafficPolicy": {
+      "type": "object",
+      "additionalProperties": true
     }
   }
 }
